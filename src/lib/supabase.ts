@@ -11,7 +11,9 @@ export interface Build {
   title: string;
   class_name: string;
   description: string;
-  build_data: Record<string, unknown>;
+  skills: string | null;
+  equipment: string | null;
+  playstyle: string | null;
   author_name: string;
   created_at: string;
   upvotes: number;
@@ -26,6 +28,14 @@ export interface Discussion {
   category: string;
   created_at: string;
   replies_count: number;
+}
+
+export interface Reply {
+  id: string;
+  discussion_id: string;
+  content: string;
+  author_name: string;
+  created_at: string;
 }
 
 export interface WikiArticle {

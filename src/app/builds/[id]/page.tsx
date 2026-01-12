@@ -1,71 +1,30 @@
 import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
+import { Build } from '@/lib/supabase';
 
-// This would normally come from Supabase
-const getBuild = (id: string) => {
-  const builds: Record<string, {
-    id: string;
-    title: string;
-    class_name: string;
-    author_name: string;
-    description: string;
-    skills: string;
-    equipment: string;
-    playstyle: string;
-    upvotes: number;
-    tags: string[];
-    created_at: string;
-  }> = {
-    '1': {
-      id: '1',
-      title: 'Shadow Assassin - Max Crit DPS',
-      class_name: 'Rogue',
-      author_name: 'ShadowMaster99',
-      description: 'High burst damage build focusing on critical strikes and stealth. Perfect for PvE content and demolishing bosses.',
-      skills: `Core Skills:
-- Shadow Strike (Max) - Your main damage dealer
-- Critical Mastery (Max) - Essential for crit builds
-- Vanish (5 points) - Survivability and repositioning
-- Backstab (Max) - Massive damage from stealth
-- Poison Blade (7 points) - DoT for sustained damage
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-Passives:
-- Deadly Precision (Max)
-- Shadow Affinity (Max)
-- Quick Reflexes (5 points)`,
-      equipment: `Weapons:
-- Dagger of the Night (Main Hand) - Best crit chance
-- Shadow Fang (Off Hand) - Crit damage bonus
+async function getBuild(id: string): Promise<Build | null> {
+  const { data, error } = await supabase
+    .from('builds')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-Armor:
-- Assassin's Cowl (Head) - +15% crit
-- Nightstalker Vest (Chest) - Stealth bonus
-- Swift Leather Boots - Movement speed
+  if (error) {
+    console.error('Error fetching build:', error);
+    return null;
+  }
 
-Accessories:
-- Ring of Shadows x2
-- Pendant of Precision`,
-      playstyle: `Rotation:
-1. Open from stealth with Backstab
-2. Apply Poison Blade
-3. Spam Shadow Strike
-4. Use Vanish when in danger or to reset Backstab
-
-Tips:
-- Always position behind enemies for bonus damage
-- Save Vanish for emergencies or burst phases
-- Keep Poison Blade active at all times`,
-      upvotes: 142,
-      tags: ['PvE', 'DPS', 'Beginner-Friendly'],
-      created_at: '2024-01-10',
-    },
-  };
-
-  return builds[id] || null;
-};
+  return data;
+}
 
 export default async function BuildPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const build = getBuild(id);
+  const build = await getBuild(id);
 
   if (!build) {
     return (
@@ -77,6 +36,12 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
       </div>
     );
   }
+
+  const formattedDate = new Date(build.created_at).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -91,11 +56,11 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-3 flex-wrap">
               <span className="px-3 py-1 text-sm font-medium rounded-lg bg-accent/20 text-accent-light">
                 {build.class_name}
               </span>
-              {build.tags.map((tag) => (
+              {build.tags?.map((tag) => (
                 <span key={tag} className="px-2 py-0.5 text-xs rounded bg-card-border text-muted">
                   {tag}
                 </span>
@@ -103,7 +68,7 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
             </div>
             <h1 className="text-4xl font-bold mb-2">{build.title}</h1>
             <p className="text-muted">
-              by <span className="text-foreground">{build.author_name}</span> • {build.created_at}
+              by <span className="text-foreground">{build.author_name}</span> • {formattedDate}
             </p>
           </div>
           <div className="flex flex-col items-center p-4 rounded-lg bg-card-bg border border-card-border">
@@ -120,30 +85,28 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* Skills */}
-        <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
-          <h2 className="text-xl font-semibold mb-3">Skills & Abilities</h2>
-          <pre className="text-muted whitespace-pre-wrap font-sans">{build.skills}</pre>
-        </div>
+        {build.skills && (
+          <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+            <h2 className="text-xl font-semibold mb-3">Skills & Abilities</h2>
+            <pre className="text-muted whitespace-pre-wrap font-sans">{build.skills}</pre>
+          </div>
+        )}
 
         {/* Equipment */}
-        <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
-          <h2 className="text-xl font-semibold mb-3">Equipment & Gear</h2>
-          <pre className="text-muted whitespace-pre-wrap font-sans">{build.equipment}</pre>
-        </div>
+        {build.equipment && (
+          <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+            <h2 className="text-xl font-semibold mb-3">Equipment & Gear</h2>
+            <pre className="text-muted whitespace-pre-wrap font-sans">{build.equipment}</pre>
+          </div>
+        )}
 
         {/* Playstyle */}
-        <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
-          <h2 className="text-xl font-semibold mb-3">Playstyle & Tips</h2>
-          <pre className="text-muted whitespace-pre-wrap font-sans">{build.playstyle}</pre>
-        </div>
-
-        {/* Comments section placeholder */}
-        <div className="p-6 rounded-xl bg-card-bg border border-card-border">
-          <h2 className="text-xl font-semibold mb-4">Comments</h2>
-          <p className="text-muted text-center py-8">
-            Comments coming soon! Connect Supabase to enable discussions.
-          </p>
-        </div>
+        {build.playstyle && (
+          <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+            <h2 className="text-xl font-semibold mb-3">Playstyle & Tips</h2>
+            <pre className="text-muted whitespace-pre-wrap font-sans">{build.playstyle}</pre>
+          </div>
+        )}
 
         {/* Back link */}
         <div className="mt-8">

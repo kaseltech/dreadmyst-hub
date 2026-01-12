@@ -1,12 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 const classes = ['Warrior', 'Mage', 'Rogue', 'Healer'];
 const tagOptions = ['PvE', 'PvP', 'DPS', 'Tank', 'Healer', 'Support', 'Solo', 'Raid', 'Beginner-Friendly', 'Endgame', 'AoE', 'Speed'];
 
 export default function NewBuildPage() {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     class_name: '',
@@ -18,11 +22,29 @@ export default function NewBuildPage() {
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Would submit to Supabase here
-    console.log({ ...formData, tags: selectedTags });
-    alert('Build submitted! (Demo mode - Supabase integration needed)');
+    setSubmitting(true);
+
+    const { error } = await supabase.from('builds').insert({
+      title: formData.title,
+      class_name: formData.class_name,
+      description: formData.description,
+      skills: formData.skills || null,
+      equipment: formData.equipment || null,
+      playstyle: formData.playstyle || null,
+      author_name: formData.author_name,
+      tags: selectedTags,
+      upvotes: 0,
+    });
+
+    if (error) {
+      console.error('Error submitting build:', error);
+      alert('Error submitting build. Please try again.');
+      setSubmitting(false);
+    } else {
+      router.push('/builds');
+    }
   };
 
   const toggleTag = (tag: string) => {
@@ -160,9 +182,10 @@ export default function NewBuildPage() {
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
-              className="px-8 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-colors"
+              disabled={submitting}
+              className="px-8 py-3 bg-accent hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
             >
-              Submit Build
+              {submitting ? 'Submitting...' : 'Submit Build'}
             </button>
             <Link
               href="/builds"

@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 const categories = ['General', 'Builds', 'Tips & Tricks', 'Questions', 'News'];
 
 export default function NewDiscussionPage() {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -13,11 +17,25 @@ export default function NewDiscussionPage() {
     author_name: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Would submit to Supabase here
-    console.log(formData);
-    alert('Discussion posted! (Demo mode - Supabase integration needed)');
+    setSubmitting(true);
+
+    const { error } = await supabase.from('discussions').insert({
+      title: formData.title,
+      content: formData.content,
+      category: formData.category,
+      author_name: formData.author_name,
+      replies_count: 0,
+    });
+
+    if (error) {
+      console.error('Error posting discussion:', error);
+      alert('Error posting discussion. Please try again.');
+      setSubmitting(false);
+    } else {
+      router.push('/discuss');
+    }
   };
 
   return (
@@ -91,9 +109,10 @@ export default function NewDiscussionPage() {
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
-              className="px-8 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-colors"
+              disabled={submitting}
+              className="px-8 py-3 bg-accent hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
             >
-              Post Discussion
+              {submitting ? 'Posting...' : 'Post Discussion'}
             </button>
             <Link
               href="/discuss"
