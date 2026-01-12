@@ -1,30 +1,107 @@
+'use client';
+
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
-import { Build } from '@/lib/supabase';
+import { supabase, Build } from '@/lib/supabase';
+import { useAuth } from '@/components/AuthProvider';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-async function getBuild(id: string): Promise<Build | null> {
-  const { data, error } = await supabase
-    .from('builds')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    console.error('Error fetching build:', error);
-    return null;
-  }
-
-  return data;
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
-export default async function BuildPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const build = await getBuild(id);
+export default function BuildPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const { user, signInWithDiscord } = useAuth();
+  const [build, setBuild] = useState<Build | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [voting, setVoting] = useState(false);
+
+  useEffect(() => {
+    fetchBuild();
+    checkIfVoted();
+  }, [id, user]);
+
+  async function fetchBuild() {
+    const { data, error } = await supabase
+      .from('builds')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching build:', error);
+    } else {
+      setBuild(data);
+    }
+    setLoading(false);
+  }
+
+  async function checkIfVoted() {
+    if (!user) {
+      setHasVoted(false);
+      return;
+    }
+
+    const { data } = await supabase
+      .from('build_votes')
+      .select('id')
+      .eq('build_id', id)
+      .eq('user_id', user.id)
+      .single();
+
+    setHasVoted(!!data);
+  }
+
+  async function handleUpvote() {
+    if (!user || !build || voting) return;
+
+    setVoting(true);
+
+    if (hasVoted) {
+      // Remove vote
+      await supabase
+        .from('build_votes')
+        .delete()
+        .eq('build_id', id)
+        .eq('user_id', user.id);
+
+      await supabase
+        .from('builds')
+        .update({ upvotes: build.upvotes - 1 })
+        .eq('id', id);
+
+      setBuild({ ...build, upvotes: build.upvotes - 1 });
+      setHasVoted(false);
+    } else {
+      // Add vote
+      await supabase
+        .from('build_votes')
+        .insert({ build_id: id, user_id: user.id });
+
+      await supabase
+        .from('builds')
+        .update({ upvotes: build.upvotes + 1 })
+        .eq('id', id);
+
+      setBuild({ ...build, upvotes: build.upvotes + 1 });
+      setHasVoted(true);
+    }
+
+    setVoting(false);
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p className="text-muted">Loading...</p>
+      </div>
+    );
+  }
 
   if (!build) {
     return (
@@ -36,12 +113,6 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
       </div>
     );
   }
-
-  const formattedDate = new Date(build.created_at).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -68,11 +139,30 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
             </div>
             <h1 className="text-4xl font-bold mb-2">{build.title}</h1>
             <p className="text-muted">
-              by <span className="text-foreground">{build.author_name}</span> • {formattedDate}
+              by <span className="text-foreground">{build.author_name}</span> • {formatDate(build.created_at)}
             </p>
           </div>
           <div className="flex flex-col items-center p-4 rounded-lg bg-card-bg border border-card-border">
-            <button className="text-3xl hover:scale-110 transition-transform">▲</button>
+            {user ? (
+              <button
+                onClick={handleUpvote}
+                disabled={voting}
+                className={`text-3xl hover:scale-110 transition-transform disabled:opacity-50 ${
+                  hasVoted ? 'text-accent' : ''
+                }`}
+                title={hasVoted ? 'Remove upvote' : 'Upvote this build'}
+              >
+                {hasVoted ? '▲' : '△'}
+              </button>
+            ) : (
+              <button
+                onClick={signInWithDiscord}
+                className="text-3xl hover:scale-110 transition-transform text-muted"
+                title="Sign in to upvote"
+              >
+                △
+              </button>
+            )}
             <span className="text-2xl font-bold text-accent-light">{build.upvotes}</span>
             <span className="text-xs text-muted">upvotes</span>
           </div>
@@ -81,7 +171,7 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
         {/* Description */}
         <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
           <h2 className="text-xl font-semibold mb-3">Overview</h2>
-          <p className="text-muted">{build.description}</p>
+          <p className="text-muted whitespace-pre-wrap">{build.description}</p>
         </div>
 
         {/* Skills */}
