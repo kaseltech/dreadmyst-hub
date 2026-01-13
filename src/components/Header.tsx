@@ -78,11 +78,11 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-14 items-center justify-between">
           {/* Logo - Portal icon only */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center overflow-hidden h-10 w-10">
             <img
               src="/portal.png"
               alt="Dreadmyst Nexus"
-              className="w-[22px] h-[22px] hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.4)] transition-all duration-200"
+              className="h-24 w-auto -my-4 hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.4)] transition-all duration-200"
             />
           </Link>
 
