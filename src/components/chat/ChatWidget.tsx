@@ -409,35 +409,67 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
         }
       }
 
-      // Fetch last message and unread count for each user
+      // Collect all conversation IDs for batch queries
+      const allConvoIds = data.map(c => c.id);
+
+      // Batch query: Get recent messages for all conversations at once
+      const { data: recentMessages } = await supabase
+        .from('messages')
+        .select('*')
+        .in('conversation_id', allConvoIds)
+        .order('created_at', { ascending: false })
+        .limit(100); // Get enough to find last message per convo
+
+      // Batch query: Get unread counts for all conversations at once
+      const { data: unreadMessages } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', allConvoIds)
+        .eq('read', false)
+        .neq('sender_id', user.id);
+
+      // Build lookup maps from batch results
+      const lastMessageByConvo = new Map<string, Message>();
+      if (recentMessages) {
+        for (const msg of recentMessages) {
+          if (!lastMessageByConvo.has(msg.conversation_id)) {
+            lastMessageByConvo.set(msg.conversation_id, msg as Message);
+          }
+        }
+      }
+
+      const unreadCountByConvo = new Map<string, number>();
+      if (unreadMessages) {
+        for (const msg of unreadMessages) {
+          unreadCountByConvo.set(msg.conversation_id, (unreadCountByConvo.get(msg.conversation_id) || 0) + 1);
+        }
+      }
+
+      // Update each user chat with batch results
       for (const [userId, chat] of userMap) {
         const convoIds = chat.conversations.map(c => c.id);
 
         // Update isArchived if ALL conversations are archived
         chat.isArchived = convoIds.every(id => archivedConvoIds.has(id));
 
-        // Get last message
-        const { data: lastMsg } = await supabase
-          .from('messages')
-          .select('*')
-          .in('conversation_id', convoIds)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (lastMsg) {
-          chat.lastMessage = lastMsg;
+        // Find last message across all convos with this user
+        let lastMessage: Message | undefined;
+        for (const convoId of convoIds) {
+          const msg = lastMessageByConvo.get(convoId);
+          if (msg && (!lastMessage || new Date(msg.created_at) > new Date(lastMessage.created_at))) {
+            lastMessage = msg;
+          }
+        }
+        if (lastMessage) {
+          chat.lastMessage = lastMessage;
         }
 
-        // Get unread count
-        const { count } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .in('conversation_id', convoIds)
-          .eq('read', false)
-          .neq('sender_id', user.id);
-
-        chat.unreadCount = count || 0;
+        // Sum unread counts across all convos with this user
+        let totalUnread = 0;
+        for (const convoId of convoIds) {
+          totalUnread += unreadCountByConvo.get(convoId) || 0;
+        }
+        chat.unreadCount = totalUnread;
       }
 
       // Sort by last message time
