@@ -3,9 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, BuildStats, BuildAbilities } from '@/lib/supabase';
+import { createBrowserClient } from '@supabase/ssr';
+import { BuildStats, BuildAbilities } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { CLASS_DATA, ClassName, BASE_STATS, GENERAL_STATS, COMBAT_STATS, SKILL_STATS } from '@/lib/class-data';
+
+// Create fresh client for each operation to avoid stale connections
+function getSupabase() {
+  return createBrowserClient(
+    'https://vnafrwxtxadddpbnfdgr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuYWZyd3h0eGFkZGRwYm5mZGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNjAzMjQsImV4cCI6MjA4MzgzNjMyNH0.fAbkswHI8ex_AxQI7zoIZfR82OCChrMjJDQoadDnaTg'
+  );
+}
 
 const tagOptions = ['PvE', 'PvP', 'DPS', 'Tank', 'Healer', 'Support', 'Solo', 'Group', 'Beginner-Friendly', 'Endgame', 'AoE', 'Speed'];
 
@@ -82,7 +91,8 @@ export default function NewBuildPage() {
       if (ytMatch) youtubeVideoId = ytMatch[1];
     }
 
-    const { error } = await supabase.from('builds').insert({
+    const client = getSupabase();
+    const { error } = await client.from('builds').insert({
       title: formData.title,
       class_name: selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1),
       description: formData.description,
