@@ -322,11 +322,11 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
                 value={equipmentSubtype}
                 onChange={(e) => setEquipmentSubtype(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
               >
-                <option value="">Select...</option>
+                <option value="" style={{ background: '#1a1a24', color: '#9ca3af' }}>Select...</option>
                 {subtypeOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value} style={{ background: '#1a1a24', color: '#e5e5e5' }}>{opt.label}</option>
                 ))}
               </select>
             </div>
@@ -341,8 +341,8 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
               placeholder={isEquipment ? 'e.g., Godly Breastplate of the Lion' : 'e.g., Keys to the Barracks'}
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+              className="w-full px-3 py-2 rounded-lg placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+              style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
             />
           </div>
         </div>
@@ -392,8 +392,8 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
                   max="25"
                   value={levelRequirement}
                   onChange={(e) => setLevelRequirement(parseInt(e.target.value) || 1)}
-                  className="w-20 px-3 py-2 rounded-lg text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                  className="w-20 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                  style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
                 />
               </div>
             </div>
@@ -406,8 +406,8 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
                 placeholder={"+10% Melee Damage\n+5 Fire Resistance"}
                 value={equipEffects}
                 onChange={(e) => setEquipEffects(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                className="w-full px-3 py-2 rounded-lg placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
+                style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
               />
             </div>
           </div>
@@ -465,8 +465,8 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
                 min="1"
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-20 px-3 py-2 rounded-lg text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                className="w-20 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
               />
             </div>
           )}
@@ -483,8 +483,8 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
                 placeholder="e.g., 50k or 1.5m"
                 value={priceDisplay}
                 onChange={(e) => handlePriceChange(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                className="flex-1 px-3 py-2 rounded-lg placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
               />
               {pricePerUnit > 0 && (
                 <span className="text-amber-500 font-semibold text-sm whitespace-nowrap">
@@ -518,8 +518,8 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
             placeholder="Any additional details..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+            className="w-full px-3 py-2 rounded-lg placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
+            style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
           />
         </div>
 

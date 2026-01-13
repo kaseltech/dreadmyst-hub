@@ -15,7 +15,8 @@ interface Position {
   y: number;
 }
 
-type ChatSize = 'minimized' | 'small' | 'medium' | 'large';
+type ChatMode = 'minimized' | 'open';
+type ChatSize = 'small' | 'medium' | 'large';
 
 interface UserChat {
   otherUser: Profile;
@@ -25,15 +26,16 @@ interface UserChat {
 }
 
 const SIZES: Record<ChatSize, { width: number; height: number }> = {
-  minimized: { width: 0, height: 0 },
   small: { width: 320, height: 400 },
   medium: { width: 380, height: 500 },
   large: { width: 450, height: 600 },
 };
 
+const MINIMIZED_SIZE = { width: 48, height: 48 };
+
 export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<ChatMode>('minimized');
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [userChats, setUserChats] = useState<UserChat[]>([]);
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
@@ -45,27 +47,38 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Size state
+  // Size state for open mode
   const [chatSize, setChatSize] = useState<ChatSize>('medium');
 
-  // Draggable state
+  // Draggable state (works for both minimized and open modes)
   const [position, setPosition] = useState<Position | null>(null);
+  const [minimizedPosition, setMinimizedPosition] = useState<Position | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
+  const iconRef = useRef<HTMLDivElement>(null);
 
   // Load saved preferences from localStorage
   useEffect(() => {
     const savedPosition = localStorage.getItem('chatWidgetPosition');
+    const savedMinPosition = localStorage.getItem('chatMinimizedPosition');
     const savedSize = localStorage.getItem('chatWidgetSize');
     if (savedPosition) {
-      try {
-        setPosition(JSON.parse(savedPosition));
-      } catch (e) {}
+      try { setPosition(JSON.parse(savedPosition)); } catch (e) {}
+    }
+    if (savedMinPosition) {
+      try { setMinimizedPosition(JSON.parse(savedMinPosition)); } catch (e) {}
     }
     if (savedSize && ['small', 'medium', 'large'].includes(savedSize)) {
       setChatSize(savedSize as ChatSize);
     }
+  }, []);
+
+  // Listen for open event from messages page
+  useEffect(() => {
+    const handleOpenChat = () => setMode('open');
+    window.addEventListener('openChatWidget', handleOpenChat);
+    return () => window.removeEventListener('openChatWidget', handleOpenChat);
   }, []);
 
   // Save preferences
@@ -76,13 +89,17 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   }, [position]);
 
   useEffect(() => {
-    if (chatSize !== 'minimized') {
-      localStorage.setItem('chatWidgetSize', chatSize);
+    if (minimizedPosition) {
+      localStorage.setItem('chatMinimizedPosition', JSON.stringify(minimizedPosition));
     }
+  }, [minimizedPosition]);
+
+  useEffect(() => {
+    localStorage.setItem('chatWidgetSize', chatSize);
   }, [chatSize]);
 
-  // Drag handlers
-  const handleDragStart = (e: React.MouseEvent) => {
+  // Drag handlers for open panel
+  const handlePanelDragStart = (e: React.MouseEvent) => {
     if (!panelRef.current) return;
     e.preventDefault();
     const rect = panelRef.current.getBoundingClientRect();
@@ -90,17 +107,37 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     setIsDragging(true);
   };
 
+  // Drag handlers for minimized icon
+  const handleIconDragStart = (e: React.MouseEvent) => {
+    if (!iconRef.current) return;
+    e.preventDefault();
+    const rect = iconRef.current.getBoundingClientRect();
+    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setIsDragging(true);
+  };
+
   useEffect(() => {
     if (!isDragging) return;
+
     const handleMouseMove = (e: MouseEvent) => {
-      const size = SIZES[chatSize];
-      const maxX = window.innerWidth - size.width;
-      const maxY = window.innerHeight - size.height;
-      setPosition({
-        x: Math.max(0, Math.min(e.clientX - dragOffset.x, maxX)),
-        y: Math.max(0, Math.min(e.clientY - dragOffset.y, maxY)),
-      });
+      if (mode === 'minimized') {
+        const maxX = window.innerWidth - MINIMIZED_SIZE.width;
+        const maxY = window.innerHeight - MINIMIZED_SIZE.height;
+        setMinimizedPosition({
+          x: Math.max(0, Math.min(e.clientX - dragOffset.x, maxX)),
+          y: Math.max(0, Math.min(e.clientY - dragOffset.y, maxY)),
+        });
+      } else {
+        const size = SIZES[chatSize];
+        const maxX = window.innerWidth - size.width;
+        const maxY = window.innerHeight - size.height;
+        setPosition({
+          x: Math.max(0, Math.min(e.clientX - dragOffset.x, maxX)),
+          y: Math.max(0, Math.min(e.clientY - dragOffset.y, maxY)),
+        });
+      }
     };
+
     const handleMouseUp = () => setIsDragging(false);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
@@ -108,7 +145,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset, chatSize]);
+  }, [isDragging, dragOffset, chatSize, mode]);
 
   const resetPosition = () => {
     setPosition(null);
@@ -380,21 +417,28 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const activeUserChat = activeUserId ? userChats.find(c => c.otherUser.id === activeUserId) : null;
   const size = SIZES[chatSize];
 
+  // Default positions
+  const defaultMinPosition = { x: window.innerWidth - 64, y: window.innerHeight - 120 };
+  const defaultOpenPosition = { x: window.innerWidth - size.width - 24, y: window.innerHeight - size.height - 24 };
+
+  const currentMinPosition = minimizedPosition || defaultMinPosition;
+
   const widget = (
     <>
       {/* Notification Toast */}
       {notification && (
         <div
-          className="fixed bottom-24 right-6 z-[60] max-w-sm p-3 bg-card-bg border border-amber-500/50 rounded-lg shadow-2xl animate-in slide-in-from-right duration-300 cursor-pointer"
+          className="fixed z-[60] max-w-sm p-3 bg-[#1a1a24] border border-amber-500/50 rounded-lg shadow-2xl animate-in slide-in-from-right duration-300 cursor-pointer"
+          style={{ bottom: mode === 'minimized' ? currentMinPosition.y - 80 : 100, right: 24 }}
           onClick={() => {
             setNotification(null);
-            setIsOpen(true);
+            setMode('open');
           }}
         >
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
               <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
@@ -410,32 +454,52 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
         </div>
       )}
 
-      {/* Chat Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
-        style={{ background: 'linear-gradient(135deg, #b45309, #e68a00)' }}
-      >
-        {isOpen ? (
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        ) : (
-          <>
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      {/* Minimized Icon - Draggable */}
+      {mode === 'minimized' && (
+        <div
+          ref={iconRef}
+          className={`fixed z-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          style={{
+            left: currentMinPosition.x,
+            top: currentMinPosition.y,
+          }}
+          onMouseDown={handleIconDragStart}
+        >
+          <div
+            onClick={(e) => {
+              if (!isDragging) {
+                setMode('open');
+              }
+            }}
+            className="relative w-12 h-12 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-105 group"
+            style={{
+              background: 'linear-gradient(135deg, #1a1a24, #252532)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.4), 0 0 20px rgba(245,158,11,0.1)'
+            }}
+          >
+            {/* Envelope icon */}
+            <svg className="w-5 h-5 text-amber-500 group-hover:text-amber-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
+
+            {/* Unread badge */}
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
-          </>
-        )}
-      </button>
 
-      {/* Chat Panel */}
-      {isOpen && (
+            {/* Glow effect when has messages */}
+            {unreadCount > 0 && (
+              <div className="absolute inset-0 rounded-xl bg-amber-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Open Chat Panel */}
+      {mode === 'open' && (
         <div
           ref={panelRef}
           className={`fixed z-50 bg-[#0c0c10] border border-gray-800 rounded-xl shadow-2xl flex flex-col overflow-hidden ${
@@ -444,7 +508,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
           style={{
             width: size.width,
             height: size.height,
-            ...(position ? { left: position.x, top: position.y } : { bottom: 80, right: 24 }),
+            ...(position ? { left: position.x, top: position.y } : { right: 24, bottom: 24 }),
           }}
         >
           {/* Header */}
@@ -453,7 +517,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
               isDragging ? 'cursor-grabbing' : 'cursor-grab'
             }`}
             style={{ background: 'linear-gradient(180deg, #161620, #0c0c10)' }}
-            onMouseDown={handleDragStart}
+            onMouseDown={handlePanelDragStart}
           >
             <div className="flex items-center gap-2 flex-1 min-w-0">
               {activeUserChat ? (
@@ -479,9 +543,14 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
               ) : (
                 <>
                   <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   <span className="font-semibold text-sm">Messages</span>
+                  {unreadCount > 0 && (
+                    <span className="px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -526,10 +595,14 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
                 </button>
               )}
 
-              {/* Close */}
-              <button onClick={() => setIsOpen(false)} className="p-1.5 text-muted hover:text-red-400 rounded" title="Close">
+              {/* Minimize */}
+              <button
+                onClick={() => setMode('minimized')}
+                className="p-1.5 text-muted hover:text-amber-400 rounded"
+                title="Minimize"
+              >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
                 </svg>
               </button>
             </div>
@@ -607,7 +680,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
               {userChats.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-4">
                   <svg className="w-10 h-10 text-muted/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   <p className="text-muted text-sm">No conversations yet</p>
                   <p className="text-muted/50 text-xs mt-1">Contact a seller to start chatting</p>

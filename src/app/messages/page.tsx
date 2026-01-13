@@ -1,53 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { supabase, Conversation } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) return 'Just now';
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'Yesterday';
-  return `${days}d ago`;
-}
-
 export default function MessagesPage() {
-  const router = useRouter();
   const { user, loading: authLoading, signInWithDiscord } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) {
-      fetchConversations();
-    } else if (!authLoading && !user) {
-      setLoading(false);
+    setMounted(true);
+  }, []);
+
+  // Dispatch event to open the chat widget
+  useEffect(() => {
+    if (mounted && user && typeof window !== 'undefined') {
+      // Dispatch custom event to open chat widget
+      window.dispatchEvent(new CustomEvent('openChatWidget'));
     }
-  }, [authLoading, user]);
+  }, [mounted, user]);
 
-  async function fetchConversations() {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*, listing:listings(*), buyer:profiles!conversations_buyer_id_fkey(*), seller:profiles!conversations_seller_id_fkey(*)')
-      .or(`buyer_id.eq.${user!.id},seller_id.eq.${user!.id}`)
-      .order('updated_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching conversations:', error);
-    } else {
-      setConversations(data || []);
-    }
-    setLoading(false);
-  }
-
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <p className="text-muted">Loading...</p>
@@ -75,68 +47,57 @@ export default function MessagesPage() {
     );
   }
 
+  // Show a helpful message that directs users to the chat widget
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2">Messages</h1>
-        <p className="text-muted mb-8">Your conversations about marketplace listings</p>
+      <div className="max-w-lg mx-auto text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6"
+          style={{
+            background: 'linear-gradient(135deg, #1a1a24, #252532)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)'
+          }}
+        >
+          <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
 
-        {conversations.length === 0 ? (
-          <div className="text-center py-12 p-6 rounded-xl bg-card-bg border border-card-border">
-            <p className="text-lg text-muted mb-2">No messages yet</p>
-            <p className="text-sm text-muted mb-4">
-              Start a conversation by contacting a seller on the marketplace
-            </p>
-            <Link
-              href="/market"
-              className="inline-block px-6 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-colors"
-            >
-              Browse Marketplace
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {conversations.map((convo) => {
-              const otherUser = convo.buyer_id === user.id ? convo.seller : convo.buyer;
-              const isBuyer = convo.buyer_id === user.id;
+        <h1 className="text-3xl font-bold mb-2">Messages</h1>
+        <p className="text-muted mb-6">
+          Your conversations are in the floating message widget.
+          Look for the message icon on your screen - you can drag it anywhere!
+        </p>
 
-              return (
-                <Link
-                  key={convo.id}
-                  href={`/messages/${convo.id}`}
-                  className="block p-4 rounded-xl border border-card-border bg-card-bg hover:border-accent/50 transition-colors"
-                >
-                  <div className="flex items-start gap-4">
-                    {otherUser?.avatar_url && (
-                      <img
-                        src={otherUser.avatar_url}
-                        alt={otherUser.username}
-                        className="w-12 h-12 rounded-full"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div>
-                          <span className="font-semibold">{otherUser?.username || 'Unknown'}</span>
-                          {otherUser?.in_game_name && (
-                            <span className="text-xs text-accent ml-2">IGN: {otherUser.in_game_name}</span>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted">{formatTimeAgo(convo.updated_at)}</span>
-                      </div>
-                      <p className="text-sm text-muted truncate">
-                        Re: {convo.listing?.item_name || 'Unknown Item'}
-                      </p>
-                      <span className="text-xs text-accent-light">
-                        {isBuyer ? 'You are buying' : 'You are selling'}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+        <div className="p-4 rounded-xl bg-card-bg border border-card-border text-left">
+          <h3 className="font-semibold mb-2 text-amber-400">Quick Tips</h3>
+          <ul className="text-sm text-muted space-y-2">
+            <li className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Click the message icon to open your conversations</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Drag the icon anywhere on the page</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Resize the chat window using the controls in the header</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>All messages with the same person are grouped together</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   );
