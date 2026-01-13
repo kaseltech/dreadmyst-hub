@@ -18,16 +18,29 @@ export default function BuildsPage() {
 
   async function fetchBuilds() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('builds')
-      .select('*')
-      .order('created_at', { ascending: false });
+    console.log('[Builds] Starting fetch...');
+    const startTime = Date.now();
 
-    if (error) {
-      console.error('Error fetching builds:', error);
-    } else {
-      setBuilds(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('builds')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      console.log('[Builds] Fetch completed in', Date.now() - startTime, 'ms');
+
+      if (error) {
+        console.error('[Builds] Supabase error:', error);
+        alert('Error loading builds: ' + error.message);
+      } else {
+        console.log('[Builds] Got', data?.length || 0, 'builds');
+        setBuilds(data || []);
+      }
+    } catch (err) {
+      console.error('[Builds] Exception:', err);
+      alert('Exception loading builds: ' + (err as Error).message);
     }
+
     setLoading(false);
   }
 

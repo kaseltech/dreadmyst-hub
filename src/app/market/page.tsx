@@ -38,17 +38,30 @@ export default function MarketPage() {
 
   async function fetchListings() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('listings')
-      .select('*, seller:profiles(*)')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false });
+    console.log('[Market] Starting fetch...');
+    const startTime = Date.now();
 
-    if (error) {
-      console.error('Error fetching listings:', error);
-    } else {
-      setListings(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*, seller:profiles(*)')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      console.log('[Market] Fetch completed in', Date.now() - startTime, 'ms');
+
+      if (error) {
+        console.error('[Market] Supabase error:', error);
+        alert('Error loading listings: ' + error.message);
+      } else {
+        console.log('[Market] Got', data?.length || 0, 'listings');
+        setListings(data || []);
+      }
+    } catch (err) {
+      console.error('[Market] Exception:', err);
+      alert('Exception loading listings: ' + (err as Error).message);
     }
+
     setLoading(false);
   }
 
