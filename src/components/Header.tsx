@@ -76,14 +76,18 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-card-border bg-card-bg/95 backdrop-blur">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 sm:h-20 items-center justify-between">
+        <div className="flex h-20 sm:h-24 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center gap-2">
             <img
-              src="/logo.png"
-              alt="Dreadmyst Nexus"
-              className="h-12 sm:h-14 md:h-16 w-auto"
+              src="/portal.png"
+              alt=""
+              className="h-10 sm:h-12 w-auto"
             />
+            <div className="text-lg sm:text-xl font-bold tracking-tight hidden sm:block">
+              <span className="text-amber-500">Dreadmyst</span>
+              <span className="text-amber-300 ml-1">Nexus</span>
+            </div>
           </Link>
 
           {/* Navigation - centered */}

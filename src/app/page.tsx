@@ -5,14 +5,17 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative py-20 px-4 text-center bg-gradient-to-b from-card-bg to-background">
+      <section className="relative py-12 sm:py-20 px-4 text-center bg-gradient-to-b from-card-bg to-background">
         <div className="container mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-orange-400 via-amber-500 to-orange-600 bg-clip-text text-transparent">
-              Dreadmyst Nexus
-            </span>
-          </h1>
-          <p className="text-xl text-muted max-w-2xl mx-auto mb-8">
+          {/* Full Logo */}
+          <div className="mb-6">
+            <img
+              src="/logo.png"
+              alt="Dreadmyst Nexus"
+              className="h-32 sm:h-40 md:h-48 lg:h-56 w-auto mx-auto"
+            />
+          </div>
+          <p className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-8">
             Your community-driven resource for Dreadmyst Online.
             Discover builds, explore guides, and connect with fellow adventurers.
           </p>
