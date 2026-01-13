@@ -14,6 +14,7 @@ export interface Ability {
   description: string;
   maxLevel: number;
   type: 'spell' | 'action';
+  icon?: string; // Path to icon in /icons/spells/
 }
 
 export interface ClassData {
@@ -33,21 +34,20 @@ export const CLASS_DATA: Record<ClassName, ClassData> = {
     weapons: ['Staves', 'Maces', 'Shields'],
     primaryStats: ['INT', 'WIL'],
     abilities: [
-      // Spells
-      { id: 'discipline', name: 'Discipline', description: 'Reduces all damage taken by a friendly target by 50% for 8 sec. Target is immune to Dispel.', maxLevel: 5, type: 'spell' },
-      { id: 'blessed-shield', name: 'Blessed Shield', description: 'Absorbs damage for 25 sec.', maxLevel: 5, type: 'spell' },
-      { id: 'satanic-madness', name: 'Satanic Madness', description: 'Horrify up to five nearby enemies with visions of Hell, causing them to flee in terror for 8 sec.', maxLevel: 5, type: 'spell' },
-      { id: 'reincarnation', name: 'Reincarnation', description: 'Grants a blessing to a friendly target that lasts for 5 minutes. If the target dies while the blessing is in effect, they are resurrected.', maxLevel: 5, type: 'spell' },
-      { id: 'rejuvenation', name: 'Rejuvenation', description: 'Heals a friendly target over 15 sec.', maxLevel: 5, type: 'spell' },
-      { id: 'resurrection', name: 'Resurrection', description: 'Brings a dead player back to life with 50% health and mana. Cannot be cast when in combat.', maxLevel: 5, type: 'spell' },
-      { id: 'plague', name: 'Plague', description: 'An instrument of darkness that causes Shadow damage every 2 sec for 12 sec.', maxLevel: 5, type: 'spell' },
-      { id: 'smite', name: 'Smite', description: 'Consumes an enemy target in Holy flames, dealing weapon damage as Holy damage.', maxLevel: 5, type: 'spell' },
-      { id: 'harrowing-strike', name: 'Harrowing Strike', description: 'Deals 200% weapon damage as Shadow damage and reducing their damage by 5% for 10 sec.', maxLevel: 5, type: 'spell' },
-      { id: 'heal', name: 'Heal', description: 'Heals a friendly target.', maxLevel: 5, type: 'spell' },
-      { id: 'holy-bolt', name: 'Holy Bolt', description: 'Deals Holy damage to an enemy and incapacitating them for 1 sec. Breaks on damage.', maxLevel: 5, type: 'spell' },
-      { id: 'inner-strength', name: 'Inner Strength', description: 'Increases a friendly target\'s damage by 20% for 15 sec.', maxLevel: 5, type: 'spell' },
-      { id: 'lesser-heal', name: 'Lesser Heal', description: 'Heals a friendly target for a small amount.', maxLevel: 5, type: 'spell' },
-      { id: 'penance', name: 'Penance', description: 'Punish an enemy target for their sins, burning 250 points of their Mana in the process.', maxLevel: 5, type: 'spell' },
+      { id: 'discipline', name: 'Discipline', description: 'Reduces all damage taken by a friendly target by 50% for 8 sec. Target is immune to Dispel.', maxLevel: 5, type: 'spell', icon: 'Pain Suppression.png' },
+      { id: 'blessed-shield', name: 'Blessed Shield', description: 'Absorbs damage for 25 sec.', maxLevel: 5, type: 'spell', icon: 'Blessed Shield.png' },
+      { id: 'satanic-madness', name: 'Satanic Madness', description: 'Horrify up to five nearby enemies with visions of Hell, causing them to flee in terror for 8 sec.', maxLevel: 5, type: 'spell', icon: 'Psychic Scream.png' },
+      { id: 'reincarnation', name: 'Reincarnation', description: 'Grants a blessing to a friendly target that lasts for 5 minutes. If the target dies while the blessing is in effect, they are resurrected.', maxLevel: 5, type: 'spell', icon: 'Reincarnation.png' },
+      { id: 'rejuvenation', name: 'Rejuvenation', description: 'Heals a friendly target over 15 sec.', maxLevel: 5, type: 'spell', icon: 'Renew.png' },
+      { id: 'resurrection', name: 'Resurrection', description: 'Brings a dead player back to life with 50% health and mana. Cannot be cast when in combat.', maxLevel: 5, type: 'spell', icon: 'Resurrection.png' },
+      { id: 'plague', name: 'Plague', description: 'An instrument of darkness that causes Shadow damage every 2 sec for 12 sec.', maxLevel: 5, type: 'spell', icon: 'Plague.png' },
+      { id: 'smite', name: 'Smite', description: 'Consumes an enemy target in Holy flames, dealing weapon damage as Holy damage.', maxLevel: 5, type: 'spell', icon: 'Smite.png' },
+      { id: 'harrowing-strike', name: 'Harrowing Strike', description: 'Deals 200% weapon damage as Shadow damage and reducing their damage by 5% for 10 sec.', maxLevel: 5, type: 'spell', icon: 'Shadowbolt.png' },
+      { id: 'heal', name: 'Heal', description: 'Heals a friendly target.', maxLevel: 5, type: 'spell', icon: 'Heal.png' },
+      { id: 'holy-bolt', name: 'Holy Bolt', description: 'Deals Holy damage to an enemy and incapacitating them for 1 sec. Breaks on damage.', maxLevel: 5, type: 'spell', icon: 'Holy Bolt.png' },
+      { id: 'inner-strength', name: 'Inner Strength', description: 'Increases a friendly target\'s damage by 20% for 15 sec.', maxLevel: 5, type: 'spell', icon: 'Inner Fire.png' },
+      { id: 'lesser-heal', name: 'Lesser Heal', description: 'Heals a friendly target for a small amount.', maxLevel: 5, type: 'spell', icon: 'Lesser Heal.png' },
+      { id: 'penance', name: 'Penance', description: 'Punish an enemy target for their sins, burning 250 points of their Mana in the process.', maxLevel: 5, type: 'spell', icon: 'Mana Burn.png' },
     ],
   },
   paladin: {
@@ -70,10 +70,26 @@ export const CLASS_DATA: Record<ClassName, ClassData> = {
     weapons: ['Staves', 'Wands'],
     primaryStats: ['INT', 'WIL'],
     abilities: [
-      // Placeholder - will be filled in with actual abilities
-      { id: 'placeholder-1', name: 'Fireball', description: 'Placeholder ability - data coming soon', maxLevel: 5, type: 'spell' },
-      { id: 'placeholder-2', name: 'Frost Nova', description: 'Placeholder ability - data coming soon', maxLevel: 5, type: 'spell' },
-      { id: 'placeholder-3', name: 'Arcane Blast', description: 'Placeholder ability - data coming soon', maxLevel: 5, type: 'spell' },
+      { id: 'magical-amplification', name: 'Magical Amplification', description: 'Amplifies magical power.', maxLevel: 5, type: 'spell', icon: 'Amplify Magic.png' },
+      { id: 'vim-of-wisdom', name: 'Vim of Wisdom', description: 'Increases wisdom and magical abilities.', maxLevel: 5, type: 'spell', icon: 'Fortify Intellect.png' },
+      { id: 'boon-of-clairvoyance', name: 'Boon of Clairvoyance', description: 'Grants enhanced magical perception.', maxLevel: 5, type: 'spell', icon: 'Boon of Clairvoyance.png' },
+      { id: 'boon-of-protection', name: 'Boon of Protection', description: 'Provides magical protection.', maxLevel: 5, type: 'spell', icon: 'Boon of Iron-Clad.png' },
+      { id: 'antimagic', name: 'Antimagic', description: 'Counters enemy magic.', maxLevel: 5, type: 'spell', icon: 'Counter Spell.png' },
+      { id: 'magical-dampening', name: 'Magical Dampening', description: 'Dampens magical effects.', maxLevel: 5, type: 'spell', icon: 'Dampen Magic.png' },
+      { id: 'ignite', name: 'Ignite', description: 'Sets the target ablaze.', maxLevel: 5, type: 'spell', icon: 'Fire Blast.png' },
+      { id: 'warmth', name: 'Warmth', description: 'Provides warmth and fire resistance.', maxLevel: 5, type: 'spell', icon: 'Fire Ward.png' },
+      { id: 'fireball', name: 'Fireball', description: 'Hurls a ball of fire at the target.', maxLevel: 5, type: 'spell', icon: 'Fireball.png' },
+      { id: 'ice-blast', name: 'Ice Blast', description: 'Blasts the target with ice.', maxLevel: 5, type: 'spell', icon: 'Frostbolt.png' },
+      { id: 'chains-of-ice', name: 'Chains of Ice', description: 'Binds the target in frozen chains.', maxLevel: 5, type: 'spell', icon: 'Frost Nova.png' },
+      { id: 'ice-shard', name: 'Ice Shard', description: 'Launches a shard of ice at the target.', maxLevel: 5, type: 'spell', icon: 'Icebolt.png' },
+      { id: 'deep-freeze', name: 'Deep Freeze', description: 'Freezes the target solid.', maxLevel: 5, type: 'spell', icon: 'Frozen Armor.png' },
+      { id: 'illusion-gate', name: 'Illusion Gate', description: 'Creates a magical portal.', maxLevel: 5, type: 'spell', icon: 'Illusion Gate.png' },
+      { id: 'inferno', name: 'Inferno', description: 'Unleashes a devastating inferno.', maxLevel: 5, type: 'spell', icon: 'Inferno.png' },
+      { id: 'wisdom-of-lazarus', name: 'Wisdom of Lazarus', description: 'Grants ancient wisdom.', maxLevel: 5, type: 'spell', icon: "Lumiel's Wisdom.png" },
+      { id: 'bind-spirit', name: 'Bind Spirit', description: 'Binds a spirit to your will.', maxLevel: 5, type: 'spell', icon: 'Polymorph.png' },
+      { id: 'remove-curse', name: 'Remove Curse', description: 'Removes curses from a target.', maxLevel: 5, type: 'spell', icon: 'Remove Curse.png' },
+      { id: 'scorch', name: 'Scorch', description: 'Scorches the target with fire.', maxLevel: 5, type: 'spell', icon: 'Scorch.png' },
+      { id: 'teleport', name: 'Teleport', description: 'Teleports to a location.', maxLevel: 5, type: 'spell', icon: 'Teleport.png' },
     ],
   },
   ranger: {

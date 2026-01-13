@@ -288,6 +288,13 @@ export default function BuildPage({ params }: { params: Promise<{ id: string }> 
                     <div key={ability.id} className="p-4 rounded-lg bg-background border border-card-border">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
+                          {ability.icon && (
+                            <img
+                              src={`/icons/spells/${ability.icon}`}
+                              alt={ability.name}
+                              className="w-8 h-8 rounded border border-card-border"
+                            />
+                          )}
                           <span className={`px-2 py-0.5 text-xs rounded ${
                             ability.type === 'spell' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
                           }`}>

@@ -353,6 +353,13 @@ export default function NewBuildPage() {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-4">
+                      {ability.icon && (
+                        <img
+                          src={`/icons/spells/${ability.icon}`}
+                          alt={ability.name}
+                          className="w-10 h-10 rounded border border-card-border flex-shrink-0"
+                        />
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className={`px-1.5 py-0.5 text-xs rounded ${
