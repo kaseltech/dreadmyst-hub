@@ -27,8 +27,12 @@ export const metadata: Metadata = {
   description: "Your community resource for Dreadmyst Online. Find character builds, game guides, wiki info, trade items, and join discussions with fellow players.",
   keywords: ["Dreadmyst Online", "Dreadmyst Nexus", "MMO", "builds", "guides", "wiki", "community", "marketplace", "trading"],
   icons: {
-    icon: '/favicon.png',
-    apple: '/favicon.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
 };
 
