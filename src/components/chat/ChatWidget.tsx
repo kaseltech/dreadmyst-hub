@@ -557,9 +557,12 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
         { event: 'INSERT', schema: 'public', table: 'messages' },
         async (payload) => {
           const newMsg = payload.new as Message;
+          console.log('[Chat] New message received via realtime:', newMsg.id);
 
           // Show notification if not from us and chat not focused on that user
           if (newMsg.sender_id !== user.id) {
+            console.log('[Chat] Message from other user, checking notification conditions...');
+            console.log('[Chat] activeUserId:', activeUserId, 'sender:', newMsg.sender_id, 'muted:', isMuted);
             const { data: sender } = await supabase
               .from('profiles')
               .select('*')
@@ -570,6 +573,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
             if (activeUserId !== newMsg.sender_id && !isMuted) {
               const senderName = sender?.in_game_name || sender?.username || 'Someone';
               const messagePreview = newMsg.content.slice(0, 50) + (newMsg.content.length > 50 ? '...' : '');
+              console.log('[Chat] Showing notification from:', senderName);
 
               // In-app toast notification
               setNotification({
@@ -595,13 +599,22 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
                 document.title = `(New Message) Dreadmyst Nexus`;
               }
 
-              // Play notification sound (if available)
+              // Play notification sound using Web Audio API
               try {
-                const audio = new Audio('/notification.mp3');
-                audio.volume = 0.5;
-                audio.play().catch(() => {
-                  // Sound file may not exist - that's okay
-                });
+                const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 800; // Hz
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.3;
+
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.stop(audioContext.currentTime + 0.3);
               } catch {
                 // Audio API not supported - that's okay
               }

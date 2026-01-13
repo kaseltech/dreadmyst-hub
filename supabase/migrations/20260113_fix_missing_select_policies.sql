@@ -43,14 +43,6 @@ CREATE POLICY "Authenticated users can create discussions" ON discussions
   FOR INSERT WITH CHECK ((select auth.uid()) IS NOT NULL);
 
 -- =====================
--- WIKI_ARTICLES TABLE - Public read access
--- =====================
-DROP POLICY IF EXISTS "Anyone can view wiki articles" ON wiki_articles;
-DROP POLICY IF EXISTS "Wiki articles are viewable by everyone" ON wiki_articles;
-CREATE POLICY "Anyone can view wiki articles" ON wiki_articles
-  FOR SELECT USING (true);
-
--- =====================
 -- BUILD_VOTES TABLE - Need select for vote checking
 -- =====================
 DROP POLICY IF EXISTS "Anyone can view build votes" ON build_votes;
