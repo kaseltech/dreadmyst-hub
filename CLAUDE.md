@@ -1,9 +1,10 @@
-# Dreadmyst Hub - Project Context
+# Dreadmyst Nexus - Project Context
 
 ## Overview
 Community website for **Dreadmyst Online**, a fantasy MMO game. Features a marketplace for trading items, wiki, build guides, and discussion forums.
 
 **Live Site:** Deployed on Vercel (auto-deploys from main branch)
+**Domain:** dreadmyst-nexus.com (pending)
 **Repo:** https://github.com/kaseltech/dreadmyst-hub
 
 ## Tech Stack
@@ -13,13 +14,13 @@ Community website for **Dreadmyst Online**, a fantasy MMO game. Features a marke
 - **Styling:** Tailwind CSS with dark fantasy theme
 - **Language:** TypeScript
 
-## Color Theme
-- Background: `#0a0a0f` (near black)
-- Card BG: `#12121a`
-- Card Border: `#1e1e2e`
-- Accent: `#7c3aed` (purple)
-- Accent Light: `#8b5cf6`
-- Muted text: `#6b7280`
+## Color Theme (Orange/Black)
+- Background: `#0a0a0c` (near black)
+- Card BG: `#141418`
+- Card Border: `#2a2a32`
+- Accent: `#ea580c` (orange-600)
+- Accent Light: `#fb923c` (orange-400)
+- Muted text: `#71717a`
 
 ## Database Schema
 

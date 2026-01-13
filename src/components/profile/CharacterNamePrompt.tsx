@@ -46,7 +46,7 @@ export default function CharacterNamePrompt({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onSkip} title="Welcome to Dreadmyst Hub!" size="md">
+    <Modal isOpen={isOpen} onClose={onSkip} title="Welcome to Dreadmyst Nexus!" size="md">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <p className="text-muted mb-4">

@@ -79,9 +79,9 @@ export default function Header() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl">🌑</span>
-              <span className="text-xl font-bold bg-gradient-to-r from-accent-light to-accent bg-clip-text text-transparent hidden sm:inline">
-                Dreadmyst Hub
+              <span className="text-2xl">🔥</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent hidden sm:inline">
+                Dreadmyst Nexus
               </span>
             </Link>
             <button

@@ -23,9 +23,9 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "Dreadmyst Hub - Community Wiki, Builds & Marketplace",
+  title: "Dreadmyst Nexus - Community Wiki, Builds & Marketplace",
   description: "Your community resource for Dreadmyst Online. Find character builds, game guides, wiki info, trade items, and join discussions with fellow players.",
-  keywords: ["Dreadmyst Online", "MMO", "builds", "guides", "wiki", "community", "marketplace", "trading"],
+  keywords: ["Dreadmyst Online", "Dreadmyst Nexus", "MMO", "builds", "guides", "wiki", "community", "marketplace", "trading"],
 };
 
 export default function RootLayout({

@@ -6,9 +6,9 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="font-bold text-lg mb-3 text-accent-light">Dreadmyst Hub</h3>
+            <h3 className="font-bold text-lg mb-3 text-accent-light">Dreadmyst Nexus</h3>
             <p className="text-muted text-sm">
-              Community-driven resource for Dreadmyst Online. Guides, builds, and discussions.
+              Community-driven resource for Dreadmyst Online. Guides, builds, marketplace, and discussions.
             </p>
           </div>
 
@@ -32,7 +32,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-4 border-t border-card-border text-center text-sm text-muted">
-          <p>Dreadmyst Hub is a fan-made community resource. Not affiliated with the game developers.</p>
+          <p>Dreadmyst Nexus is a fan-made community resource. Not affiliated with the game developers.</p>
         </div>
       </div>
     </footer>

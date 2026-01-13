@@ -1,41 +1,45 @@
 /**
+ * Format a number with minimal decimal places (no trailing zeros, no rounding)
+ * 1.25 -> "1.25", 1.5 -> "1.5", 1.0 -> "1"
+ */
+function formatDecimal(value: number): string {
+  // Truncate to 2 decimal places without rounding
+  const truncated = Math.floor(value * 100) / 100;
+  // Remove trailing zeros
+  if (truncated === Math.floor(truncated)) {
+    return Math.floor(truncated).toString();
+  }
+  // Check if we only need 1 decimal place
+  if (truncated * 10 === Math.floor(truncated * 10)) {
+    return truncated.toFixed(1);
+  }
+  return truncated.toFixed(2);
+}
+
+/**
  * Format gold amount for display
- * Examples: 10000 -> "10K Gold", 1500000 -> "1.5M Gold", 500 -> "500 Gold"
+ * Examples: 10000 -> "10K Gold", 1250000 -> "1.25M Gold", 500 -> "500 Gold"
  */
 export function formatGold(amount: number): string {
   if (amount >= 1000000) {
-    const millions = amount / 1000000;
-    const formatted = millions === Math.floor(millions)
-      ? Math.floor(millions).toString()
-      : millions.toFixed(1);
-    return `${formatted}M Gold`;
+    return `${formatDecimal(amount / 1000000)}M Gold`;
   }
   if (amount >= 1000) {
-    const thousands = amount / 1000;
-    const formatted = thousands === Math.floor(thousands)
-      ? Math.floor(thousands).toString()
-      : thousands.toFixed(1);
-    return `${formatted}K Gold`;
+    return `${formatDecimal(amount / 1000)}K Gold`;
   }
   return `${amount.toLocaleString()} Gold`;
 }
 
 /**
  * Format gold amount short (without "Gold" suffix)
- * Examples: 10000 -> "10K", 1500000 -> "1.5M", 500 -> "500"
+ * Examples: 10000 -> "10K", 1250000 -> "1.25M", 500 -> "500"
  */
 export function formatGoldShort(amount: number): string {
   if (amount >= 1000000) {
-    const millions = amount / 1000000;
-    return millions === Math.floor(millions)
-      ? `${Math.floor(millions)}M`
-      : `${millions.toFixed(1)}M`;
+    return `${formatDecimal(amount / 1000000)}M`;
   }
   if (amount >= 1000) {
-    const thousands = amount / 1000;
-    return thousands === Math.floor(thousands)
-      ? `${Math.floor(thousands)}K`
-      : `${thousands.toFixed(1)}K`;
+    return `${formatDecimal(amount / 1000)}K`;
   }
   return amount.toLocaleString();
 }

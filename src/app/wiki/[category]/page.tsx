@@ -1,84 +1,32 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getCategory } from '@/lib/wiki-data';
 
-// Game data from community research
-const getCategoryData = (slug: string) => {
-  const categories: Record<string, { title: string; description: string; articles: { title: string; slug: string; summary: string }[] }> = {
-    'getting-started': {
-      title: 'Getting Started',
-      description: 'Everything new players need to know about Dreadmyst Online.',
-      articles: [
-        { title: 'Leveling Guide', slug: 'leveling', summary: 'Max level is 25 with 500,000 total XP. Fastest runs: 4-5 hours, casual pace: ~2 days.' },
-        { title: 'Progression Tips', slug: 'progression', summary: 'Follow quests to new grinding areas. When quests end, find mobs closest to your level.' },
-        { title: 'Server & Channels', slug: 'servers', summary: 'Channel-based system with 125 players max per channel. 5-min cooldown between switches.' },
-        { title: 'Platform Support', slug: 'platforms', summary: 'Windows PC only. Runs on Steam Deck via Proton Experimental. No native Mac/Linux.' },
-      ],
-    },
-    mechanics: {
-      title: 'Game Mechanics',
-      description: 'Core systems and how they work in Dreadmyst Online.',
-      articles: [
-        { title: 'Experience System', slug: 'experience', summary: 'XP can be invested into stats or skills with escalating costs. No way to gain extra XP past cap.' },
-        { title: 'Stat Investment', slug: 'stats', summary: 'Mana costs 1 XP per point initially, then 100 XP per point after 1,000 investment.' },
-        { title: 'Skills Overview', slug: 'skills', summary: 'Skills like Lockpicking are activatable and upgraded through experience spending.' },
-        { title: 'Respec System', slug: 'respec', summary: 'Costs 500,000 gold and requires level 25 to reset your character.' },
-      ],
-    },
-    world: {
-      title: 'World & Lore',
-      description: 'Explore the world of Dreadmyst, its locations and secrets.',
-      articles: [
-        { title: 'St. Revere', slug: 'st-revere', summary: 'Major hub city. Bank located north of St. Revere (not shared between characters).' },
-        { title: 'PvP Zones', slug: 'pvp-zones', summary: 'Dangerous areas with loot runs. Part of end-game content.' },
-        { title: 'Dungeons', slug: 'dungeons', summary: 'End-game PvE content available at max level.' },
-      ],
-    },
-    items: {
-      title: 'Items & Equipment',
-      description: 'Weapons, armor, accessories, and where to find them.',
-      articles: [
-        { title: 'Trading Guide', slug: 'trading', summary: 'Player-to-player trading enabled with gold. No Auction House system.' },
-        { title: 'Banking', slug: 'banking', summary: 'Bank is north of St. Revere. Storage is NOT shared between characters.' },
-        { title: 'Gold Guide', slug: 'gold', summary: 'Gold is essential for respec (500k) and trading. Farm efficiently!' },
-      ],
-    },
-    classes: {
-      title: 'Classes',
-      description: 'Class information. Note: A meta has not been established yet!',
-      articles: [
-        { title: 'Class Overview', slug: 'overview', summary: 'No class-specific build guides exist yet. The community is still discovering optimal builds.' },
-      ],
-    },
-    skills: {
-      title: 'Skills & Abilities',
-      description: 'Complete skill information and mechanics.',
-      articles: [
-        { title: 'Skill Investment', slug: 'investment', summary: 'Skills are upgraded through experience spending with escalating costs.' },
-        { title: 'Lockpicking', slug: 'lockpicking', summary: 'Activatable skill that can be upgraded. Useful for accessing locked content.' },
-      ],
-    },
-    quests: {
-      title: 'Quests',
-      description: 'Main story, side quests, and progression.',
-      articles: [
-        { title: 'Quest Progression', slug: 'progression', summary: 'Quests guide you to new grinding areas. New quests appear as you level up.' },
-        { title: 'End-Game Content', slug: 'endgame', summary: 'Dungeons, Arena PvP, and loot runs in PvP areas await at max level.' },
-      ],
-    },
-    crafting: {
-      title: 'Crafting',
-      description: 'Crafting systems and professions.',
-      articles: [
-        { title: 'Professions', slug: 'professions', summary: 'No professions currently available in Dreadmyst Online.' },
-      ],
-    },
-  };
+// Status badge component
+function StatusBadge({ status }: { status: string }) {
+  if (status === 'published') return null;
 
-  return categories[slug] || { title: 'Category', description: 'Articles coming soon.', articles: [] };
-};
+  const config = status === 'draft'
+    ? { label: 'Draft', bg: 'bg-yellow-500/20', text: 'text-yellow-500' }
+    : { label: 'Stub', bg: 'bg-orange-500/20', text: 'text-orange-500' };
+
+  return (
+    <span className={`px-1.5 py-0.5 text-xs rounded ${config.bg} ${config.text}`}>
+      {config.label}
+    </span>
+  );
+}
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
-  const { category } = await params;
-  const data = getCategoryData(category);
+  const { category: categorySlug } = await params;
+  const category = getCategory(categorySlug);
+
+  if (!category) {
+    notFound();
+  }
+
+  const publishedArticles = category.articles.filter(a => a.status === 'published');
+  const draftArticles = category.articles.filter(a => a.status === 'draft' || a.status === 'stub');
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -87,40 +35,125 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         <nav className="text-sm text-muted mb-6">
           <Link href="/wiki" className="hover:text-foreground transition-colors">Wiki</Link>
           <span className="mx-2">/</span>
-          <span className="text-foreground">{data.title}</span>
+          <span className="text-foreground">{category.title}</span>
         </nav>
 
-        <h1 className="text-4xl font-bold mb-4">{data.title}</h1>
-        <p className="text-muted text-lg mb-8">{data.description}</p>
-
-        {/* Articles List */}
-        <div className="space-y-4">
-          {data.articles.length > 0 ? (
-            data.articles.map((article) => (
-              <Link
-                key={article.slug}
-                href={`/wiki/${category}/${article.slug}`}
-                className="block p-4 rounded-lg border border-card-border bg-card-bg hover:border-accent/50 transition-colors"
-              >
-                <h3 className="font-semibold mb-1">{article.title}</h3>
-                <p className="text-muted text-sm">{article.summary}</p>
-              </Link>
-            ))
-          ) : (
-            <div className="text-center py-12 text-muted">
-              <p className="text-lg mb-2">No articles yet</p>
-              <p className="text-sm">This section is still being built. Check back soon!</p>
-            </div>
-          )}
+        {/* Header */}
+        <div className="flex items-start gap-4 mb-8">
+          <span className="text-4xl">{category.icon}</span>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{category.title}</h1>
+            <p className="text-muted">{category.description}</p>
+          </div>
         </div>
 
+        {/* Published Articles */}
+        {publishedArticles.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-4 text-muted">
+              Articles ({publishedArticles.length})
+            </h2>
+            <div className="space-y-3">
+              {publishedArticles.map((article) => (
+                <Link
+                  key={article.slug}
+                  href={`/wiki/${categorySlug}/${article.slug}`}
+                  className="group block p-4 rounded-lg border border-card-border bg-card-bg hover:border-accent/50 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold mb-1 group-hover:text-accent-light transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-muted text-sm line-clamp-2">{article.summary}</p>
+                      {article.lastUpdated && (
+                        <p className="text-xs text-muted/60 mt-2">
+                          Updated {article.lastUpdated}
+                        </p>
+                      )}
+                    </div>
+                    <svg
+                      className="w-5 h-5 text-muted group-hover:text-accent-light transition-colors flex-shrink-0 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Draft/Stub Articles */}
+        {draftArticles.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-4 text-yellow-500">
+              In Progress ({draftArticles.length})
+            </h2>
+            <div className="space-y-3">
+              {draftArticles.map((article) => (
+                <Link
+                  key={article.slug}
+                  href={`/wiki/${categorySlug}/${article.slug}`}
+                  className="group block p-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 hover:border-yellow-500/40 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold group-hover:text-yellow-400 transition-colors">
+                          {article.title}
+                        </h3>
+                        <StatusBadge status={article.status} />
+                      </div>
+                      <p className="text-muted text-sm line-clamp-2">{article.summary}</p>
+                    </div>
+                    <svg
+                      className="w-5 h-5 text-muted group-hover:text-yellow-400 transition-colors flex-shrink-0 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {category.articles.length === 0 && (
+          <div className="text-center py-16 border border-dashed border-card-border rounded-xl">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/10 border-2 border-yellow-500/30 mb-4">
+              <span className="text-2xl">🚧</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
+            <p className="text-muted text-sm max-w-md mx-auto mb-4">
+              This section is still being researched. Help us build it by sharing info in the discussions!
+            </p>
+            <Link
+              href="/discuss"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Contribute Info
+            </Link>
+          </div>
+        )}
+
         {/* Back link */}
-        <div className="mt-8">
+        <div className="mt-8 pt-8 border-t border-card-border">
           <Link
             href="/wiki"
-            className="text-accent-light hover:text-accent transition-colors"
+            className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors"
           >
-            ← Back to Wiki
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Wiki
           </Link>
         </div>
       </div>

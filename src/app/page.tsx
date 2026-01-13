@@ -8,8 +8,8 @@ export default function Home() {
       <section className="relative py-20 px-4 text-center bg-gradient-to-b from-card-bg to-background">
         <div className="container mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-accent-light via-purple-400 to-accent bg-clip-text text-transparent">
-              Dreadmyst Hub
+            <span className="bg-gradient-to-r from-orange-400 via-amber-500 to-orange-600 bg-clip-text text-transparent">
+              Dreadmyst Nexus
             </span>
           </h1>
           <p className="text-xl text-muted max-w-2xl mx-auto mb-8">
@@ -90,7 +90,7 @@ export default function Home() {
           </p>
           <Link
             href="/builds"
-            className="inline-block px-8 py-4 bg-gradient-to-r from-accent to-purple-600 hover:from-accent-light hover:to-purple-500 text-white font-semibold rounded-lg transition-all"
+            className="inline-block px-8 py-4 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-semibold rounded-lg transition-all"
           >
             Submit Your Build
           </Link>
