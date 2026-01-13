@@ -38,37 +38,26 @@ export default function MarketPage() {
 
   async function fetchListings() {
     setLoading(true);
-    console.log('[Market] Starting fetch...');
+    console.log('[Market] Starting fetch at', new Date().toISOString());
     const startTime = Date.now();
 
     try {
-      // Add 10 second timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
       const { data, error } = await supabase
         .from('listings')
         .select('*, seller:profiles(*)')
         .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .abortSignal(controller.signal);
+        .order('created_at', { ascending: false });
 
-      clearTimeout(timeoutId);
       console.log('[Market] Fetch completed in', Date.now() - startTime, 'ms');
 
       if (error) {
-        console.error('[Market] Supabase error:', error);
+        console.error('[Market] Supabase error:', error.message, error.code, error.details);
       } else {
         console.log('[Market] Got', data?.length || 0, 'listings');
         setListings(data || []);
       }
     } catch (err: unknown) {
-      const errorName = err instanceof Error ? err.name : 'Unknown';
-      if (errorName === 'AbortError') {
-        console.error('[Market] Request timed out after 10s');
-      } else {
-        console.error('[Market] Exception:', err);
-      }
+      console.error('[Market] Exception:', err);
     }
 
     setLoading(false);
