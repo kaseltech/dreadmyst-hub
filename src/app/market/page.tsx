@@ -29,6 +29,7 @@ export default function MarketPage() {
   const { user, signInWithDiscord } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -52,13 +53,14 @@ export default function MarketPage() {
 
   async function fetchListings() {
     setLoading(true);
+    setError(null);
     console.log('[Market] Starting fetch at', new Date().toISOString());
     const startTime = Date.now();
 
     try {
       // Use fresh client to avoid stale connection issues
       const client = getSupabase();
-      const { data, error } = await client
+      const { data, error: fetchError } = await client
         .from('listings')
         .select('*, seller:profiles(*)')
         .eq('status', 'active')
@@ -66,14 +68,17 @@ export default function MarketPage() {
 
       console.log('[Market] Fetch completed in', Date.now() - startTime, 'ms');
 
-      if (error) {
-        console.error('[Market] Supabase error:', error.message, error.code, error.details);
+      if (fetchError) {
+        console.error('[Market] Supabase error:', fetchError.message, fetchError.code, fetchError.details);
+        setError(`Supabase error: ${fetchError.message}`);
       } else {
         console.log('[Market] Got', data?.length || 0, 'listings');
         setListings(data || []);
       }
     } catch (err: unknown) {
-      console.error('[Market] Exception:', err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error('[Market] Exception:', errMsg);
+      setError(`Exception: ${errMsg}`);
     }
 
     setLoading(false);
@@ -208,6 +213,22 @@ export default function MarketPage() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               Loading listings...
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="text-center py-8">
+            <div className="inline-block p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+              <p className="text-red-400 font-medium">Error loading listings</p>
+              <p className="text-red-400/70 text-sm mt-1">{error}</p>
+              <button
+                onClick={fetchListings}
+                className="mt-3 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm"
+              >
+                Retry
+              </button>
             </div>
           </div>
         )}
