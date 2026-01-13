@@ -1,7 +1,39 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Card from '@/components/Card';
+import { supabase, Build, Discussion } from '@/lib/supabase';
 
 export default function Home() {
+  const [latestBuild, setLatestBuild] = useState<Build | null>(null);
+  const [latestDiscussion, setLatestDiscussion] = useState<Discussion | null>(null);
+
+  useEffect(() => {
+    async function fetchLatest() {
+      // Fetch latest build
+      const { data: build } = await supabase
+        .from('builds')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (build) setLatestBuild(build);
+
+      // Fetch latest discussion
+      const { data: discussion } = await supabase
+        .from('discussions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (discussion) setLatestDiscussion(discussion);
+    }
+
+    fetchLatest();
+  }, []);
   return (
     <div>
       {/* Hero Section */}
@@ -104,18 +136,26 @@ export default function Home() {
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-14">Latest Updates</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="card-hover bg-card-bg cursor-pointer">
-              <span className="text-[10px] text-amber-500/80 uppercase tracking-widest font-semibold">New Build</span>
-              <h3 className="text-lg font-semibold mt-3 mb-2 text-foreground">Shadow Assassin - Max DPS Guide</h3>
-              <p className="text-sm">A high-damage build focusing on critical strikes and stealth mechanics...</p>
-              <p className="text-xs text-muted mt-4">Posted by Player123</p>
-            </div>
-            <div className="card-hover bg-card-bg cursor-pointer">
-              <span className="text-[10px] text-amber-500/80 uppercase tracking-widest font-semibold">Wiki Update</span>
-              <h3 className="text-lg font-semibold mt-3 mb-2 text-foreground">Beginner&apos;s Guide Updated</h3>
-              <p className="text-sm">Complete walkthrough for new players including starter tips...</p>
-              <p className="text-xs text-muted mt-4">Updated today</p>
-            </div>
+            {latestBuild && (
+              <Link href={`/builds/${latestBuild.id}`} className="card-hover bg-card-bg cursor-pointer block">
+                <span className="text-[10px] text-amber-500/80 uppercase tracking-widest font-semibold">New Build</span>
+                <h3 className="text-lg font-semibold mt-3 mb-2 text-foreground">{latestBuild.title}</h3>
+                <p className="text-sm line-clamp-2">{latestBuild.description}</p>
+                <p className="text-xs text-muted mt-4">
+                  {latestBuild.class_name} build by {latestBuild.author_name}
+                </p>
+              </Link>
+            )}
+            {latestDiscussion && (
+              <Link href={`/discuss/${latestDiscussion.id}`} className="card-hover bg-card-bg cursor-pointer block">
+                <span className="text-[10px] text-amber-500/80 uppercase tracking-widest font-semibold">New Discussion</span>
+                <h3 className="text-lg font-semibold mt-3 mb-2 text-foreground">{latestDiscussion.title}</h3>
+                <p className="text-sm line-clamp-2">{latestDiscussion.content}</p>
+                <p className="text-xs text-muted mt-4">
+                  Posted by {latestDiscussion.author_name}
+                </p>
+              </Link>
+            )}
           </div>
         </div>
       </section>
