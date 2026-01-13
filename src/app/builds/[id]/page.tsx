@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { supabase, Build } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
-import { CLASS_DATA, BASE_STATS, SECONDARY_STATS, ClassName } from '@/lib/class-data';
+import { CLASS_DATA, BASE_STATS, GENERAL_STATS, COMBAT_STATS, SKILL_STATS, ClassName } from '@/lib/class-data';
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -194,13 +194,67 @@ export default function BuildPage({ params }: { params: Promise<{ id: string }> 
           </div>
         )}
 
-        {/* Secondary Stats */}
-        {build.secondary_stats && Object.keys(build.secondary_stats).length > 0 && (
+        {/* YouTube Video */}
+        {build.youtube_video_id && (
           <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
-            <h2 className="text-xl font-semibold mb-4">Secondary Stats</h2>
-            <div className="grid grid-cols-3 gap-4">
-              {SECONDARY_STATS.map((stat) => {
-                const value = build.secondary_stats?.[stat.id as keyof typeof build.secondary_stats];
+            <h2 className="text-xl font-semibold mb-4">Build Showcase</h2>
+            <div className="aspect-video rounded-lg overflow-hidden">
+              <iframe
+                className="w-full h-full"
+                src={`https://www.youtube.com/embed/${build.youtube_video_id}`}
+                title="Build showcase video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        )}
+
+        {/* General Stats */}
+        {build.secondary_stats && GENERAL_STATS.some(stat => build.secondary_stats?.[stat.id]) && (
+          <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+            <h2 className="text-xl font-semibold mb-4">General Stats</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {GENERAL_STATS.map((stat) => {
+                const value = build.secondary_stats?.[stat.id];
+                if (!value) return null;
+                return (
+                  <div key={stat.id} className="text-center p-3 rounded-lg bg-background border border-card-border">
+                    <div className={`text-2xl font-bold ${stat.color}`}>{value}</div>
+                    <div className="text-xs text-muted mt-1">{stat.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Combat Stats */}
+        {build.secondary_stats && COMBAT_STATS.some(stat => build.secondary_stats?.[stat.id]) && (
+          <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+            <h2 className="text-xl font-semibold mb-4">Combat Stats</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {COMBAT_STATS.map((stat) => {
+                const value = build.secondary_stats?.[stat.id];
+                if (!value) return null;
+                return (
+                  <div key={stat.id} className="text-center p-3 rounded-lg bg-background border border-card-border">
+                    <div className={`text-2xl font-bold ${stat.color}`}>{value}</div>
+                    <div className="text-xs text-muted mt-1">{stat.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Skills */}
+        {build.secondary_stats && SKILL_STATS.some(stat => build.secondary_stats?.[stat.id]) && (
+          <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+            <h2 className="text-xl font-semibold mb-4">Skills</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              {SKILL_STATS.map((stat) => {
+                const value = build.secondary_stats?.[stat.id];
                 if (!value) return null;
                 return (
                   <div key={stat.id} className="text-center p-3 rounded-lg bg-background border border-card-border">

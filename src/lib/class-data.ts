@@ -100,14 +100,43 @@ export const BASE_STATS = [
   { id: 'courage', name: 'Courage', abbrev: 'CRG', color: 'text-yellow-400' },
 ] as const;
 
-// Secondary/derived stats
-export const SECONDARY_STATS = [
+// General stats (the old secondary - HP, MP, regen)
+export const GENERAL_STATS = [
   { id: 'health', name: 'Health', abbrev: 'HP', color: 'text-red-300' },
   { id: 'mana', name: 'Mana', abbrev: 'MP', color: 'text-blue-300' },
-  { id: 'armorValue', name: 'Armor Value', abbrev: 'ARM', color: 'text-slate-300' },
   { id: 'regeneration', name: 'Regeneration', abbrev: 'REG', color: 'text-pink-400' },
   { id: 'meditate', name: 'Meditate', abbrev: 'MED', color: 'text-indigo-400' },
 ] as const;
+
+// Combat stats - crits, defense, and resistances
+export const COMBAT_STATS = [
+  { id: 'meleeCritical', name: 'Melee Critical', abbrev: 'MCR', color: 'text-orange-300' },
+  { id: 'rangedCritical', name: 'Ranged Critical', abbrev: 'RCR', color: 'text-lime-300' },
+  { id: 'spellCritical', name: 'Spell Critical', abbrev: 'SCR', color: 'text-violet-400' },
+  { id: 'dodgeRating', name: 'Dodge Rating', abbrev: 'DOD', color: 'text-emerald-400' },
+  { id: 'blockRating', name: 'Block Rating', abbrev: 'BLK', color: 'text-amber-400' },
+  { id: 'resistFrost', name: 'Frost Resist', abbrev: 'FRS', color: 'text-cyan-400' },
+  { id: 'resistFire', name: 'Fire Resist', abbrev: 'FIR', color: 'text-rose-400' },
+  { id: 'resistShadow', name: 'Shadow Resist', abbrev: 'SHD', color: 'text-gray-400' },
+  { id: 'resistHoly', name: 'Holy Resist', abbrev: 'HLY', color: 'text-amber-200' },
+] as const;
+
+// Skill stats - weapon skills and utility
+export const SKILL_STATS = [
+  { id: 'skillStaves', name: 'Staves', abbrev: 'STV', color: 'text-indigo-300' },
+  { id: 'skillMaces', name: 'Maces', abbrev: 'MCE', color: 'text-amber-300' },
+  { id: 'skillAxes', name: 'Axes', abbrev: 'AXE', color: 'text-red-300' },
+  { id: 'skillSwords', name: 'Swords', abbrev: 'SWD', color: 'text-sky-300' },
+  { id: 'skillRanged', name: 'Ranged', abbrev: 'BOW', color: 'text-lime-300' },
+  { id: 'skillDaggers', name: 'Daggers', abbrev: 'DAG', color: 'text-rose-300' },
+  { id: 'skillWands', name: 'Wands', abbrev: 'WND', color: 'text-purple-300' },
+  { id: 'skillShields', name: 'Shields', abbrev: 'SHD', color: 'text-slate-400' },
+  { id: 'bartering', name: 'Bartering', abbrev: 'BAR', color: 'text-yellow-300' },
+  { id: 'lockpicking', name: 'Lockpicking', abbrev: 'LCK', color: 'text-teal-300' },
+] as const;
+
+// Legacy alias for backward compatibility
+export const SECONDARY_STATS = GENERAL_STATS;
 
 // Helper to get class data
 export function getClassData(className: ClassName): ClassData {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, BuildStats, BuildAbilities } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
-import { CLASS_DATA, ClassName, BASE_STATS, SECONDARY_STATS } from '@/lib/class-data';
+import { CLASS_DATA, ClassName, BASE_STATS, GENERAL_STATS, COMBAT_STATS, SKILL_STATS } from '@/lib/class-data';
 
 const tagOptions = ['PvE', 'PvP', 'DPS', 'Tank', 'Healer', 'Support', 'Solo', 'Group', 'Beginner-Friendly', 'Endgame', 'AoE', 'Speed'];
 
@@ -19,22 +19,20 @@ export default function NewBuildPage() {
     description: '',
     equipment: '',
     playstyle: '',
+    youtubeUrl: '',
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [baseStats, setBaseStats] = useState<BuildStats>({
-    strength: 5,
-    agility: 5,
-    intelligence: 5,
-    willpower: 5,
-    courage: 5,
+  // Use string values to allow empty input
+  const [baseStats, setBaseStats] = useState<Record<string, string>>({
+    strength: '5',
+    agility: '5',
+    intelligence: '5',
+    willpower: '5',
+    courage: '5',
   });
-  const [secondaryStats, setSecondaryStats] = useState({
-    health: 0,
-    mana: 0,
-    armorValue: 0,
-    regeneration: 0,
-    meditate: 0,
-  });
+  const [generalStats, setGeneralStats] = useState<Record<string, string>>({});
+  const [combatStats, setCombatStats] = useState<Record<string, string>>({});
+  const [skillStats, setSkillStats] = useState<Record<string, string>>({});
   const [abilities, setAbilities] = useState<BuildAbilities>({});
 
   const classData = selectedClass ? CLASS_DATA[selectedClass] : null;
@@ -53,6 +51,37 @@ export default function NewBuildPage() {
           .join('\n')
       : '';
 
+    // Convert string stats to numbers
+    const baseStatsNum: BuildStats = {
+      strength: parseInt(baseStats.strength) || 5,
+      agility: parseInt(baseStats.agility) || 5,
+      intelligence: parseInt(baseStats.intelligence) || 5,
+      willpower: parseInt(baseStats.willpower) || 5,
+      courage: parseInt(baseStats.courage) || 5,
+    };
+
+    // Combine all secondary stats into one object
+    const allSecondaryStats: Record<string, number> = {};
+    for (const [key, val] of Object.entries(generalStats)) {
+      const num = parseInt(val);
+      if (num > 0) allSecondaryStats[key] = num;
+    }
+    for (const [key, val] of Object.entries(combatStats)) {
+      const num = parseInt(val);
+      if (num > 0) allSecondaryStats[key] = num;
+    }
+    for (const [key, val] of Object.entries(skillStats)) {
+      const num = parseInt(val);
+      if (num > 0) allSecondaryStats[key] = num;
+    }
+
+    // Extract YouTube video ID if URL provided
+    let youtubeVideoId: string | null = null;
+    if (formData.youtubeUrl) {
+      const ytMatch = formData.youtubeUrl.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([^&?]+)/);
+      if (ytMatch) youtubeVideoId = ytMatch[1];
+    }
+
     const { error } = await supabase.from('builds').insert({
       title: formData.title,
       class_name: selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1),
@@ -63,9 +92,10 @@ export default function NewBuildPage() {
       author_name: profile.username,
       tags: selectedTags,
       upvotes: 0,
-      base_stats: baseStats,
-      secondary_stats: Object.values(secondaryStats).some(v => v > 0) ? secondaryStats : null,
+      base_stats: baseStatsNum,
+      secondary_stats: Object.keys(allSecondaryStats).length > 0 ? allSecondaryStats : null,
       abilities: Object.keys(abilities).length > 0 ? abilities : null,
+      youtube_video_id: youtubeVideoId,
     });
 
     if (error) {
@@ -218,10 +248,10 @@ export default function NewBuildPage() {
                     type="number"
                     min="1"
                     max="999"
-                    value={baseStats[stat.id as keyof BuildStats] || 5}
+                    value={baseStats[stat.id] ?? ''}
                     onChange={(e) => setBaseStats(prev => ({
                       ...prev,
-                      [stat.id]: parseInt(e.target.value) || 0,
+                      [stat.id]: e.target.value,
                     }))}
                     className="w-full px-3 py-2 rounded-lg border border-card-border bg-background text-foreground text-center font-mono focus:outline-none focus:border-accent"
                   />
@@ -230,11 +260,11 @@ export default function NewBuildPage() {
               ))}
             </div>
 
-            {/* Secondary Stats (Optional) */}
+            {/* General Stats */}
             <div className="mt-6 pt-6 border-t border-card-border">
-              <h3 className="text-sm font-medium text-muted mb-3">Secondary Stats (Optional)</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                {SECONDARY_STATS.map((stat) => (
+              <h3 className="text-sm font-medium text-muted mb-3">General (Optional)</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {GENERAL_STATS.map((stat) => (
                   <div key={stat.id}>
                     <label className={`block text-xs font-medium mb-1 ${stat.color}`}>
                       {stat.name}
@@ -243,12 +273,62 @@ export default function NewBuildPage() {
                       type="number"
                       min="0"
                       placeholder="0"
-                      value={secondaryStats[stat.id as keyof typeof secondaryStats] || ''}
-                      onChange={(e) => setSecondaryStats(prev => ({
+                      value={generalStats[stat.id] ?? ''}
+                      onChange={(e) => setGeneralStats(prev => ({
                         ...prev,
-                        [stat.id]: parseInt(e.target.value) || 0,
+                        [stat.id]: e.target.value,
                       }))}
                       className="w-full px-3 py-2 rounded-lg border border-card-border bg-background text-foreground text-center font-mono text-sm focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Combat Stats */}
+            <div className="mt-6 pt-6 border-t border-card-border">
+              <h3 className="text-sm font-medium text-muted mb-3">Combat (Optional)</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {COMBAT_STATS.map((stat) => (
+                  <div key={stat.id}>
+                    <label className={`block text-xs font-medium mb-1 ${stat.color}`}>
+                      {stat.name}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={combatStats[stat.id] ?? ''}
+                      onChange={(e) => setCombatStats(prev => ({
+                        ...prev,
+                        [stat.id]: e.target.value,
+                      }))}
+                      className="w-full px-3 py-2 rounded-lg border border-card-border bg-background text-foreground text-sm focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Skill Stats */}
+            <div className="mt-6 pt-6 border-t border-card-border">
+              <h3 className="text-sm font-medium text-muted mb-3">Skills (Optional)</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                {SKILL_STATS.map((stat) => (
+                  <div key={stat.id}>
+                    <label className={`block text-xs font-medium mb-1 ${stat.color}`}>
+                      {stat.name}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={skillStats[stat.id] ?? ''}
+                      onChange={(e) => setSkillStats(prev => ({
+                        ...prev,
+                        [stat.id]: e.target.value,
+                      }))}
+                      className="w-full px-3 py-2 rounded-lg border border-card-border bg-background text-foreground text-sm focus:outline-none focus:border-accent"
                     />
                   </div>
                 ))}
@@ -334,7 +414,7 @@ export default function NewBuildPage() {
             </div>
 
             {/* Playstyle */}
-            <div>
+            <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Playstyle & Tips</label>
               <textarea
                 rows={3}
@@ -343,6 +423,19 @@ export default function NewBuildPage() {
                 onChange={(e) => setFormData({ ...formData, playstyle: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
               />
+            </div>
+
+            {/* YouTube Video */}
+            <div>
+              <label className="block text-sm font-medium mb-2">YouTube Video (Optional)</label>
+              <input
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                value={formData.youtubeUrl}
+                onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+              />
+              <p className="text-xs text-muted mt-1">Add a YouTube link to showcase your build in action</p>
             </div>
           </div>
 

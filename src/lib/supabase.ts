@@ -15,12 +15,35 @@ export interface BuildStats {
   courage?: number;
 }
 
+// More flexible secondary stats - includes general, combat, and skills
 export interface BuildSecondaryStats {
+  // General
   health?: number;
   mana?: number;
-  armorValue?: number;
   regeneration?: number;
   meditate?: number;
+  // Combat
+  meleeCritical?: number;
+  rangedCritical?: number;
+  spellCritical?: number;
+  dodgeRating?: number;
+  blockRating?: number;
+  resistFrost?: number;
+  resistFire?: number;
+  resistShadow?: number;
+  resistHoly?: number;
+  // Skills
+  skillStaves?: number;
+  skillMaces?: number;
+  skillAxes?: number;
+  skillSwords?: number;
+  skillRanged?: number;
+  skillDaggers?: number;
+  skillWands?: number;
+  skillShields?: number;
+  bartering?: number;
+  lockpicking?: number;
+  [key: string]: number | undefined;
 }
 
 export interface BuildAbilities {
@@ -43,6 +66,7 @@ export interface Build {
   base_stats?: BuildStats | null;
   secondary_stats?: BuildSecondaryStats | null;
   abilities?: BuildAbilities | null;
+  youtube_video_id?: string | null;
 }
 
 export interface Discussion {
