@@ -540,12 +540,15 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     }
   }, [user, userChats, fetchUnreadCount, fetchConversations]);
 
-  // Subscribe to new messages
+  // Subscribe to new messages (delay initial fetch to not block page render)
   useEffect(() => {
     if (!user) return;
 
-    fetchConversations();
-    fetchUnreadCount();
+    // Delay initial fetch so page content loads first
+    const initTimer = setTimeout(() => {
+      fetchConversations();
+      fetchUnreadCount();
+    }, 1000);
 
     const channel = supabase
       .channel('chat-messages')
@@ -637,6 +640,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       .subscribe();
 
     return () => {
+      clearTimeout(initTimer);
       supabase.removeChannel(channel);
       if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
     };
