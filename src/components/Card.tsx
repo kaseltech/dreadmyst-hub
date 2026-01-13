@@ -12,8 +12,8 @@ export default function Card({ title, description, href, icon, children }: CardP
   const content = (
     <div className="card-hover h-full">
       {icon && <div className="mb-4">{icon}</div>}
-      <h3 className="text-lg font-semibold mb-3 text-foreground">{title}</h3>
-      <p className="text-sm">{description}</p>
+      <h3 className="text-lg font-semibold mb-3 text-foreground" style={{ fontWeight: 600 }}>{title}</h3>
+      <p className="text-sm" style={{ color: 'rgba(255,255,255,0.72)' }}>{description}</p>
       {children}
     </div>
   );

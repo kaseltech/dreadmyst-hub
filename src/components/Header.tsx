@@ -85,7 +85,7 @@ export default function Header() {
             <img
               src="/portal.png"
               alt="Dreadmyst Nexus"
-              className="h-9 w-auto"
+              className="w-[22px] h-[22px] object-contain"
             />
           </Link>
 
@@ -99,16 +99,16 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative px-3 py-2.5 text-[14px] font-medium tracking-[0.05em] transition-colors duration-200 ${
+                  className={`relative px-3 py-2.5 text-[14px] font-medium tracking-[0.04em] transition-colors duration-200 ${
                     isActive
                       ? 'text-amber-500'
                       : 'text-white/70 hover:text-white/90'
                   }`}
-                  style={{ fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif' }}
+                  style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
                 >
                   {item.label}
                   {isActive && (
-                    <span className="absolute bottom-1 left-3 right-3 h-0.5 bg-amber-500 rounded-sm opacity-90" />
+                    <span className="absolute bottom-1 left-3 right-3 h-0.5 bg-amber-500 rounded-sm" />
                   )}
                 </Link>
               );
