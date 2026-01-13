@@ -127,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               username: username,
               avatar_url: avatar,
               in_game_name: null,
+              is_admin: false,
               created_at: new Date().toISOString(),
             });
           } else {
@@ -146,6 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           username: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
           avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
           in_game_name: null,
+          is_admin: false,
           created_at: new Date().toISOString(),
         });
       }

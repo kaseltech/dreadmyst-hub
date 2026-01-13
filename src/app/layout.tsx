@@ -26,6 +26,10 @@ export const metadata: Metadata = {
   title: "Dreadmyst Nexus - Community Wiki, Builds & Marketplace",
   description: "Your community resource for Dreadmyst Online. Find character builds, game guides, wiki info, trade items, and join discussions with fellow players.",
   keywords: ["Dreadmyst Online", "Dreadmyst Nexus", "MMO", "builds", "guides", "wiki", "community", "marketplace", "trading"],
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 export default function RootLayout({

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase, Discussion, Reply } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 function formatTimeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -38,6 +39,13 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true);
   const [replyContent, setReplyContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [deleteDiscussionOpen, setDeleteDiscussionOpen] = useState(false);
+  const [deleteReplyId, setDeleteReplyId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const isAdmin = profile?.is_admin === true;
+  const isAuthor = profile?.username === discussion?.author_name;
+  const canDeleteDiscussion = isAuthor || isAdmin;
 
   useEffect(() => {
     fetchDiscussion();
@@ -102,6 +110,49 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
     setSubmitting(false);
   }
 
+  async function handleDeleteDiscussion() {
+    if (!discussion) return;
+    setDeleting(true);
+
+    // Delete all replies first
+    await supabase.from('replies').delete().eq('discussion_id', id);
+
+    // Delete the discussion
+    const { error } = await supabase.from('discussions').delete().eq('id', id);
+
+    if (error) {
+      console.error('Error deleting discussion:', error);
+      alert('Error deleting discussion. Please try again.');
+      setDeleting(false);
+    } else {
+      router.push('/discuss');
+    }
+  }
+
+  async function handleDeleteReply(replyId: string) {
+    setDeleting(true);
+
+    const { error } = await supabase.from('replies').delete().eq('id', replyId);
+
+    if (error) {
+      console.error('Error deleting reply:', error);
+      alert('Error deleting reply. Please try again.');
+    } else {
+      // Update local state
+      setReplies(replies.filter(r => r.id !== replyId));
+      // Update reply count
+      if (discussion) {
+        await supabase
+          .from('discussions')
+          .update({ replies_count: Math.max(0, discussion.replies_count - 1) })
+          .eq('id', id);
+        setDiscussion({ ...discussion, replies_count: Math.max(0, discussion.replies_count - 1) });
+      }
+    }
+    setDeleting(false);
+    setDeleteReplyId(null);
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
@@ -143,7 +194,17 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
           <p className="text-muted whitespace-pre-wrap mb-4">{discussion.content}</p>
           <div className="flex items-center justify-between text-sm text-muted border-t border-card-border pt-4">
             <span>Posted by <span className="text-foreground">{discussion.author_name}</span></span>
-            <span>{formatDate(discussion.created_at)}</span>
+            <div className="flex items-center gap-4">
+              <span>{formatDate(discussion.created_at)}</span>
+              {canDeleteDiscussion && (
+                <button
+                  onClick={() => setDeleteDiscussionOpen(true)}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -159,18 +220,32 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
             </div>
           ) : (
             <div className="space-y-4">
-              {replies.map((reply) => (
-                <div
-                  key={reply.id}
-                  className="p-4 rounded-xl bg-card-bg border border-card-border"
-                >
-                  <p className="whitespace-pre-wrap mb-3">{reply.content}</p>
-                  <div className="flex items-center justify-between text-sm text-muted">
-                    <span className="text-foreground">{reply.author_name}</span>
-                    <span>{formatTimeAgo(reply.created_at)}</span>
+              {replies.map((reply) => {
+                const isReplyAuthor = profile?.username === reply.author_name;
+                const canDeleteReply = isReplyAuthor || isAdmin;
+                return (
+                  <div
+                    key={reply.id}
+                    className="p-4 rounded-xl bg-card-bg border border-card-border"
+                  >
+                    <p className="whitespace-pre-wrap mb-3">{reply.content}</p>
+                    <div className="flex items-center justify-between text-sm text-muted">
+                      <span className="text-foreground">{reply.author_name}</span>
+                      <div className="flex items-center gap-4">
+                        <span>{formatTimeAgo(reply.created_at)}</span>
+                        {canDeleteReply && (
+                          <button
+                            onClick={() => setDeleteReplyId(reply.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -227,6 +302,30 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
           </Link>
         </div>
       </div>
+
+      {/* Delete Discussion Modal */}
+      <ConfirmModal
+        isOpen={deleteDiscussionOpen}
+        onClose={() => setDeleteDiscussionOpen(false)}
+        onConfirm={handleDeleteDiscussion}
+        title="Delete Discussion"
+        message="Are you sure you want to delete this discussion? This will also delete all replies. This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={deleting}
+      />
+
+      {/* Delete Reply Modal */}
+      <ConfirmModal
+        isOpen={!!deleteReplyId}
+        onClose={() => setDeleteReplyId(null)}
+        onConfirm={() => deleteReplyId && handleDeleteReply(deleteReplyId)}
+        title="Delete Reply"
+        message="Are you sure you want to delete this reply? This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={deleting}
+      />
     </div>
   );
 }

@@ -77,28 +77,17 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-card-border bg-card-bg/95 backdrop-blur">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl">🔥</span>
-              <span className="text-xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent hidden sm:inline">
-                Dreadmyst Nexus
-              </span>
-            </Link>
-            <button
-              onClick={handleOpenChangelog}
-              className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-card-border transition-colors"
-              title="What's New"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-              {hasNewUpdates && (
-                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-accent rounded-full animate-pulse" />
-              )}
-            </button>
-          </div>
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <img
+              src="/logo.png"
+              alt="Dreadmyst Nexus"
+              className="h-9 sm:h-11 w-auto"
+            />
+          </Link>
 
-          <nav className="flex items-center gap-1">
+          {/* Navigation - centered */}
+          <nav className="hidden md:flex items-center gap-1 bg-background/50 px-1.5 py-1 rounded-lg border border-card-border/50">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/' && pathname.startsWith(item.href));
@@ -107,12 +96,32 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-accent text-white'
-                      : item.highlight
-                      ? 'text-yellow-400 hover:text-yellow-300 hover:bg-card-border'
-                      : 'text-muted hover:text-foreground hover:bg-card-border'
+                      ? 'bg-card-border text-foreground'
+                      : 'text-muted hover:text-foreground'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Mobile nav */}
+          <nav className="flex md:hidden items-center gap-0.5">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href ||
+                (item.href !== '/' && pathname.startsWith(item.href));
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    isActive
+                      ? 'text-foreground'
+                      : 'text-muted'
                   }`}
                 >
                   {item.label}
@@ -131,8 +140,8 @@ export default function Header() {
                   href="/messages"
                   className={`relative p-2 rounded-lg transition-colors ${
                     pathname.startsWith('/messages')
-                      ? 'bg-accent text-white'
-                      : 'text-muted hover:text-foreground hover:bg-card-border'
+                      ? 'bg-card-border text-foreground'
+                      : 'text-muted hover:text-foreground hover:bg-card-border/50'
                   }`}
                   title="Messages"
                 >
@@ -140,42 +149,74 @@ export default function Header() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </Link>
                 <div className="relative group">
-                  <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-card-border transition-colors">
+                  <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-card-border/50 transition-colors">
                     {profile?.avatar_url ? (
                       <img
                         src={profile.avatar_url}
                         alt={profile.username}
-                        className="w-8 h-8 rounded-full"
+                        className="w-8 h-8 rounded-full ring-2 ring-card-border"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-sm font-medium">
+                      <div className="w-8 h-8 rounded-full bg-card-border flex items-center justify-center text-foreground text-sm font-medium">
                         {profile?.username?.charAt(0).toUpperCase() || '?'}
                       </div>
                     )}
                   </button>
-                  <div className="absolute right-0 mt-2 w-48 py-2 bg-card-bg border border-card-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                  <div className="absolute right-0 mt-2 w-52 py-2 bg-card-bg border border-card-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                     <div className="px-4 py-2 border-b border-card-border">
                       <p className="font-medium text-sm">{profile?.username}</p>
                       <p className="text-xs text-muted">Signed in</p>
                     </div>
                     <Link
                       href="/market?mine=true"
-                      className="block px-4 py-2 text-sm text-muted hover:text-foreground hover:bg-card-border"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-muted hover:text-foreground hover:bg-card-border/50"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                      </svg>
                       My Listings
                     </Link>
                     <button
-                      onClick={signOut}
-                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-card-border"
+                      onClick={handleOpenChangelog}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-muted hover:text-foreground hover:bg-card-border/50"
                     >
-                      Sign Out
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                      What&apos;s New
+                      {hasNewUpdates && (
+                        <span className="ml-auto w-2 h-2 bg-orange-500 rounded-full" />
+                      )}
                     </button>
+                    {profile?.is_admin && (
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-amber-400 hover:text-amber-300 hover:bg-card-border/50"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Admin Panel
+                      </Link>
+                    )}
+                    <div className="border-t border-card-border mt-1 pt-1">
+                      <button
+                        onClick={signOut}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-card-border/50"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Sign Out
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

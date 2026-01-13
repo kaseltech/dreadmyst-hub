@@ -42,7 +42,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
   return (
     <Link
       href={`/market/${listing.id}`}
-      className={`group block relative overflow-hidden rounded-lg border-2 ${style.border} ${style.glow} bg-[#0d0d12] transition-all duration-300 hover:scale-[1.02]`}
+      className={`group flex flex-col relative overflow-hidden rounded-lg border-2 ${style.border} ${style.glow} bg-[#0d0d12] transition-all duration-300 hover:scale-[1.02] h-full`}
     >
       {/* Top gradient bar */}
       <div className={`h-1 bg-gradient-to-r ${style.gradient}`} />
@@ -52,7 +52,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
         <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl ${style.gradient} opacity-50`} />
       )}
 
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         {/* Header - Tier badge and time */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex flex-wrap gap-1.5">
@@ -65,30 +65,32 @@ export default function ListingCard({ listing }: ListingCardProps) {
               {listing.category}
             </span>
           </div>
-          <span className="text-xs text-gray-500">{formatTimeAgo(listing.created_at)}</span>
+          <span className="text-xs text-gray-500 flex-shrink-0">{formatTimeAgo(listing.created_at)}</span>
         </div>
 
-        {/* Item Name */}
-        <h3 className={`text-lg font-bold mb-2 leading-tight group-hover:brightness-125 transition-all ${tierConfig.color}`}>
+        {/* Item Name - Fixed height for 2 lines */}
+        <h3 className={`text-lg font-bold leading-tight group-hover:brightness-125 transition-all ${tierConfig.color} h-[3.5rem] line-clamp-2`}>
           {listing.item_name}
         </h3>
 
-        {/* Stats Row */}
-        {listing.stats && Object.keys(listing.stats).length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3">
-            {Object.entries(listing.stats).map(([stat, value]) => {
-              const config = STAT_CONFIG[stat as PrimaryStat];
-              return (
-                <span key={stat} className={`text-sm font-medium ${config?.color || 'text-gray-400'}`}>
-                  +{value} {config?.abbrev || stat.slice(0, 3).toUpperCase()}
-                </span>
-              );
-            })}
-          </div>
-        )}
+        {/* Stats Row - Fixed height */}
+        <div className="h-6 mb-2">
+          {listing.stats && Object.keys(listing.stats).length > 0 && (
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              {Object.entries(listing.stats).map(([stat, value]) => {
+                const config = STAT_CONFIG[stat as PrimaryStat];
+                return (
+                  <span key={stat} className={`text-sm font-medium ${config?.color || 'text-gray-400'}`}>
+                    +{value} {config?.abbrev || stat.slice(0, 3).toUpperCase()}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-        {/* Sockets & Level Row */}
-        <div className="flex items-center gap-4 mb-3">
+        {/* Sockets & Level Row - Fixed height */}
+        <div className="flex items-center gap-4 h-5 mb-3">
           {/* Sockets */}
           {listing.socket_count > 0 && (
             <div className="flex items-center gap-1.5">
@@ -116,6 +118,9 @@ export default function ListingCard({ listing }: ListingCardProps) {
             </span>
           )}
         </div>
+
+        {/* Spacer to push footer down */}
+        <div className="flex-1" />
 
         {/* Divider */}
         <div className="border-t border-gray-800 my-3" />
