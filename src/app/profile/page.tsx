@@ -72,7 +72,7 @@ export default function ProfilePage() {
       .select('*, blocked_profile:profiles!blocked_users_blocked_id_fkey(*)')
       .eq('blocker_id', user.id);
     if (!error && data) {
-      setBlockedUsers(data.map(b => ({
+      setBlockedUsers(data.map((b: BlockedUser) => ({
         ...b,
         blocked_profile: b.blocked_profile
       })));
@@ -88,7 +88,7 @@ export default function ProfilePage() {
       .select('*, bookmarked_profile:profiles!bookmarked_users_bookmarked_id_fkey(*)')
       .eq('user_id', user.id);
     if (!error && data) {
-      setBookmarkedUsers(data.map(b => ({
+      setBookmarkedUsers(data.map((b: BookmarkedUser) => ({
         ...b,
         bookmarked_profile: b.bookmarked_profile
       })));
