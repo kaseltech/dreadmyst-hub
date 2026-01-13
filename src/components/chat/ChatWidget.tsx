@@ -419,7 +419,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       }
 
       // Collect all conversation IDs for batch queries
-      const allConvoIds = data.map(c => c.id);
+      const allConvoIds = data.map((c: { id: string }) => c.id);
 
       // Batch query: Get recent messages for all conversations at once
       const { data: recentMessages } = await supabase
@@ -510,7 +510,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     const { count } = await supabase
       .from('messages')
       .select('*', { count: 'exact', head: true })
-      .in('conversation_id', convos.map(c => c.id))
+      .in('conversation_id', convos.map((c: { id: string }) => c.id))
       .eq('read', false)
       .neq('sender_id', user.id);
 
