@@ -44,7 +44,8 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
   const [deleting, setDeleting] = useState(false);
 
   const isAdmin = profile?.is_admin === true;
-  const isAuthor = profile?.username === discussion?.author_name;
+  const displayName = profile?.in_game_name || profile?.username;
+  const isAuthor = displayName === discussion?.author_name || profile?.username === discussion?.author_name;
   const canDeleteDiscussion = isAuthor || isAdmin;
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
     const { error } = await supabase.from('replies').insert({
       discussion_id: id,
       content: replyContent.trim(),
-      author_name: profile.username,
+      author_name: profile.in_game_name || profile.username,
     });
 
     if (error) {
@@ -221,7 +222,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
           ) : (
             <div className="space-y-4">
               {replies.map((reply) => {
-                const isReplyAuthor = profile?.username === reply.author_name;
+                const isReplyAuthor = displayName === reply.author_name || profile?.username === reply.author_name;
                 const canDeleteReply = isReplyAuthor || isAdmin;
                 return (
                   <div
@@ -265,7 +266,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
               />
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted">
-                  Replying as <span className="text-foreground">{profile.username}</span>
+                  Replying as <span className="text-foreground">{profile.in_game_name || profile.username}</span>
                 </span>
                 <button
                   type="submit"

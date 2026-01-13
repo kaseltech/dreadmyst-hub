@@ -171,13 +171,13 @@ export default function Header() {
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-card-border flex items-center justify-center text-foreground text-sm font-medium">
-                        {profile?.username?.charAt(0).toUpperCase() || '?'}
+                        {(profile?.in_game_name || profile?.username)?.charAt(0).toUpperCase() || '?'}
                       </div>
                     )}
                   </button>
                   <div className="absolute right-0 mt-2 w-52 py-2 bg-card-bg border border-card-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                     <div className="px-4 py-2 border-b border-card-border">
-                      <p className="font-medium text-sm">{profile?.username}</p>
+                      <p className="font-medium text-sm">{profile?.in_game_name || profile?.username}</p>
                       <p className="text-xs text-muted">Signed in</p>
                     </div>
                     <Link

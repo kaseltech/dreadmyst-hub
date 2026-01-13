@@ -28,7 +28,7 @@ export default function NewDiscussionPage() {
       title: formData.title,
       content: formData.content,
       category: formData.category,
-      author_name: profile.username,
+      author_name: profile.in_game_name || profile.username,
       replies_count: 0,
     });
 
@@ -126,7 +126,7 @@ export default function NewDiscussionPage() {
           {/* Submit */}
           <div className="flex items-center justify-between pt-4">
             <span className="text-sm text-muted">
-              Posting as <span className="text-foreground">{profile.username}</span>
+              Posting as <span className="text-foreground">{profile.in_game_name || profile.username}</span>
             </span>
             <div className="flex gap-4">
               <Link
