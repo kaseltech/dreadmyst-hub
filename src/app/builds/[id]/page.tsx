@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { supabase, Build } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { CLASS_DATA, BASE_STATS, SECONDARY_STATS, ClassName } from '@/lib/class-data';
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -174,7 +175,94 @@ export default function BuildPage({ params }: { params: Promise<{ id: string }> 
           <p className="text-muted whitespace-pre-wrap">{build.description}</p>
         </div>
 
-        {/* Skills */}
+        {/* Base Stats */}
+        {build.base_stats && Object.keys(build.base_stats).length > 0 && (
+          <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+            <h2 className="text-xl font-semibold mb-4">Base Stats</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              {BASE_STATS.map((stat) => {
+                const value = build.base_stats?.[stat.id as keyof typeof build.base_stats];
+                if (!value) return null;
+                return (
+                  <div key={stat.id} className="text-center p-3 rounded-lg bg-background border border-card-border">
+                    <div className={`text-2xl font-bold ${stat.color}`}>{value}</div>
+                    <div className="text-xs text-muted mt-1">{stat.abbrev}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Secondary Stats */}
+        {build.secondary_stats && Object.keys(build.secondary_stats).length > 0 && (
+          <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+            <h2 className="text-xl font-semibold mb-4">Secondary Stats</h2>
+            <div className="grid grid-cols-3 gap-4">
+              {SECONDARY_STATS.map((stat) => {
+                const value = build.secondary_stats?.[stat.id as keyof typeof build.secondary_stats];
+                if (!value) return null;
+                return (
+                  <div key={stat.id} className="text-center p-3 rounded-lg bg-background border border-card-border">
+                    <div className={`text-2xl font-bold ${stat.color}`}>{value}</div>
+                    <div className="text-xs text-muted mt-1">{stat.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Abilities */}
+        {build.abilities && Object.keys(build.abilities).length > 0 && (() => {
+          const classData = CLASS_DATA[build.class_name.toLowerCase() as ClassName];
+          if (!classData) return null;
+
+          const investedAbilities = classData.abilities.filter(
+            ability => (build.abilities?.[ability.id] || 0) > 0
+          );
+
+          if (investedAbilities.length === 0) return null;
+
+          return (
+            <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
+              <h2 className="text-xl font-semibold mb-4">Abilities</h2>
+              <div className="space-y-3">
+                {investedAbilities.map((ability) => {
+                  const level = build.abilities?.[ability.id] || 0;
+                  return (
+                    <div key={ability.id} className="p-4 rounded-lg bg-background border border-card-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2 py-0.5 text-xs rounded ${
+                            ability.type === 'spell' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
+                          }`}>
+                            {ability.type}
+                          </span>
+                          <span className="font-medium">{ability.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {[...Array(ability.maxLevel)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-3 h-3 rounded-full ${
+                                i < level ? 'bg-amber-500' : 'bg-card-border'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-sm text-muted ml-2">{level}/{ability.maxLevel}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted">{ability.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Legacy Skills (for old builds) */}
         {build.skills && (
           <div className="mb-8 p-6 rounded-xl bg-card-bg border border-card-border">
             <h2 className="text-xl font-semibold mb-3">Skills & Abilities</h2>
