@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { createBrowserClient } from '@supabase/ssr';
 import { Listing } from '@/lib/supabase';
 
@@ -14,10 +15,14 @@ function getSupabase() {
 }
 import { useAuth } from '@/components/AuthProvider';
 import { useHotkeys } from '@/hooks/useHotkeys';
-import { ItemTier } from '@/types/items';
 import MarketplaceFilters, { FilterState, defaultFilters } from '@/components/market/MarketplaceFilters';
 import ListingCard from '@/components/market/ListingCard';
-import CreateListingModal from '@/components/market/CreateListingModal';
+
+// Dynamically import CreateListingModal to avoid bundling the 2.3MB game-data.json on initial load
+const CreateListingModal = dynamic(() => import('@/components/market/CreateListingModal'), {
+  ssr: false,
+  loading: () => null,
+});
 
 export default function MarketPage() {
   const router = useRouter();
