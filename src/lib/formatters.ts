@@ -66,12 +66,10 @@ export function formatTimeAgo(dateString: string): string {
 
 /**
  * Generate whisper command for contacting seller
- * Format: /w CharacterName WTB 'Item Name' for 50K
+ * Note: The game currently treats the whole line after /w as the character name,
+ * so we only output the character name. The dev needs to improve in-game chat
+ * to support actual messages.
  */
-export function generateWhisperCommand(characterName: string, itemName: string, price?: number): string {
-  let command = `/w ${characterName} WTB '${itemName}'`;
-  if (price) {
-    command += ` for ${formatGoldShort(price)}`;
-  }
-  return command;
+export function generateWhisperCommand(characterName: string): string {
+  return `/w ${characterName}`;
 }

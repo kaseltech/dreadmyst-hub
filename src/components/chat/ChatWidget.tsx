@@ -16,22 +16,20 @@ interface Position {
 }
 
 type ChatMode = 'minimized' | 'open';
-type ChatSize = 'small' | 'medium' | 'large';
-
 interface UserChat {
   otherUser: Profile;
   conversations: Conversation[];
   lastMessage?: Message;
   unreadCount: number;
+  isArchived: boolean;
+  isBlocked: boolean;
+  isBookmarked: boolean;
 }
 
-const SIZES: Record<ChatSize, { width: number; height: number }> = {
-  small: { width: 320, height: 400 },
-  medium: { width: 380, height: 500 },
-  large: { width: 450, height: 600 },
-};
-
 const MINIMIZED_SIZE = { width: 48, height: 48 };
+const MIN_SIZE = { width: 300, height: 350 };
+const MAX_SIZE = { width: 600, height: 800 };
+const DEFAULT_SIZE = { width: 380, height: 500 };
 
 export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const { user } = useAuth();
@@ -47,8 +45,19 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Size state for open mode
-  const [chatSize, setChatSize] = useState<ChatSize>('medium');
+  // Archive/Block/Bookmark state
+  const [archivedConvoIds, setArchivedConvoIds] = useState<Set<string>>(new Set());
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
+  const [bookmarkedUserIds, setBookmarkedUserIds] = useState<Set<string>>(new Set());
+  const [showArchived, setShowArchived] = useState(false);
+  const [showChatMenu, setShowChatMenu] = useState(false);
+
+  // Size state for open mode (resizable)
+  const [chatSize, setChatSize] = useState<{ width: number; height: number }>(DEFAULT_SIZE);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeCorner, setResizeCorner] = useState<string | null>(null);
+  const [dragStartPos, setDragStartPos] = useState<Position | null>(null);
+  const [hasDragged, setHasDragged] = useState(false);
 
   // Draggable state (works for both minimized and open modes)
   const [position, setPosition] = useState<Position | null>(null);
@@ -69,8 +78,13 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     if (savedMinPosition) {
       try { setMinimizedPosition(JSON.parse(savedMinPosition)); } catch (e) {}
     }
-    if (savedSize && ['small', 'medium', 'large'].includes(savedSize)) {
-      setChatSize(savedSize as ChatSize);
+    if (savedSize) {
+      try {
+        const parsed = JSON.parse(savedSize);
+        if (parsed.width && parsed.height) {
+          setChatSize(parsed);
+        }
+      } catch (e) {}
     }
   }, []);
 
@@ -95,7 +109,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   }, [minimizedPosition]);
 
   useEffect(() => {
-    localStorage.setItem('chatWidgetSize', chatSize);
+    localStorage.setItem('chatWidgetSize', JSON.stringify(chatSize));
   }, [chatSize]);
 
   // Drag handlers for open panel
@@ -113,43 +127,182 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     e.preventDefault();
     const rect = iconRef.current.getBoundingClientRect();
     setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+    setHasDragged(false);
     setIsDragging(true);
   };
 
+  // Resize handlers for corners
+  const handleResizeStart = (e: React.MouseEvent, corner: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizeCorner(corner);
+    setIsResizing(true);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+  };
+
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isDragging && !isResizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (mode === 'minimized') {
-        const maxX = window.innerWidth - MINIMIZED_SIZE.width;
-        const maxY = window.innerHeight - MINIMIZED_SIZE.height;
-        setMinimizedPosition({
-          x: Math.max(0, Math.min(e.clientX - dragOffset.x, maxX)),
-          y: Math.max(0, Math.min(e.clientY - dragOffset.y, maxY)),
+      if (isResizing && resizeCorner && dragStartPos) {
+        // Handle resize
+        const dx = e.clientX - dragStartPos.x;
+        const dy = e.clientY - dragStartPos.y;
+
+        setChatSize(prev => {
+          let newWidth = prev.width;
+          let newHeight = prev.height;
+
+          if (resizeCorner.includes('e')) newWidth = Math.max(MIN_SIZE.width, Math.min(MAX_SIZE.width, prev.width + dx));
+          if (resizeCorner.includes('w')) newWidth = Math.max(MIN_SIZE.width, Math.min(MAX_SIZE.width, prev.width - dx));
+          if (resizeCorner.includes('s')) newHeight = Math.max(MIN_SIZE.height, Math.min(MAX_SIZE.height, prev.height + dy));
+          if (resizeCorner.includes('n')) newHeight = Math.max(MIN_SIZE.height, Math.min(MAX_SIZE.height, prev.height - dy));
+
+          return { width: newWidth, height: newHeight };
         });
-      } else {
-        const size = SIZES[chatSize];
-        const maxX = window.innerWidth - size.width;
-        const maxY = window.innerHeight - size.height;
-        setPosition({
-          x: Math.max(0, Math.min(e.clientX - dragOffset.x, maxX)),
-          y: Math.max(0, Math.min(e.clientY - dragOffset.y, maxY)),
-        });
+
+        // Adjust position for nw, n, ne, w corners
+        if (resizeCorner.includes('w') || resizeCorner.includes('n')) {
+          setPosition(prev => {
+            if (!prev) return prev;
+            let newX = prev.x;
+            let newY = prev.y;
+            if (resizeCorner.includes('w')) newX = prev.x + dx;
+            if (resizeCorner.includes('n')) newY = prev.y + dy;
+            return { x: newX, y: newY };
+          });
+        }
+
+        setDragStartPos({ x: e.clientX, y: e.clientY });
+        return;
+      }
+
+      if (isDragging) {
+        // Check if we've actually moved (threshold of 5px)
+        if (dragStartPos) {
+          const dist = Math.sqrt(Math.pow(e.clientX - dragStartPos.x, 2) + Math.pow(e.clientY - dragStartPos.y, 2));
+          if (dist > 5) setHasDragged(true);
+        }
+
+        if (mode === 'minimized') {
+          const maxX = window.innerWidth - MINIMIZED_SIZE.width;
+          const maxY = window.innerHeight - MINIMIZED_SIZE.height;
+          setMinimizedPosition({
+            x: Math.max(0, Math.min(e.clientX - dragOffset.x, maxX)),
+            y: Math.max(0, Math.min(e.clientY - dragOffset.y, maxY)),
+          });
+        } else {
+          const maxX = window.innerWidth - chatSize.width;
+          const maxY = window.innerHeight - chatSize.height;
+          setPosition({
+            x: Math.max(0, Math.min(e.clientX - dragOffset.x, maxX)),
+            y: Math.max(0, Math.min(e.clientY - dragOffset.y, maxY)),
+          });
+        }
       }
     };
 
-    const handleMouseUp = () => setIsDragging(false);
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+      setResizeCorner(null);
+      setDragStartPos(null);
+    };
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset, chatSize, mode]);
+  }, [isDragging, isResizing, resizeCorner, dragOffset, chatSize, mode, dragStartPos]);
 
   const resetPosition = () => {
     setPosition(null);
     localStorage.removeItem('chatWidgetPosition');
+  };
+
+  // Fetch archived conversation IDs
+  const fetchArchivedConversations = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('archived_conversations')
+      .select('conversation_id')
+      .eq('user_id', user.id);
+    if (data) {
+      setArchivedConvoIds(new Set(data.map(d => d.conversation_id)));
+    }
+  }, [user]);
+
+  // Fetch blocked user IDs
+  const fetchBlockedUsers = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('blocked_users')
+      .select('blocked_id')
+      .eq('blocker_id', user.id);
+    if (data) {
+      setBlockedUserIds(new Set(data.map(d => d.blocked_id)));
+    }
+  }, [user]);
+
+  // Fetch bookmarked user IDs
+  const fetchBookmarkedUsers = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('bookmarked_users')
+      .select('bookmarked_id')
+      .eq('user_id', user.id);
+    if (data) {
+      setBookmarkedUserIds(new Set(data.map(d => d.bookmarked_id)));
+    }
+  }, [user]);
+
+  // Toggle archive for a conversation
+  const toggleArchive = async (conversationId: string) => {
+    if (!user) return;
+    const isArchived = archivedConvoIds.has(conversationId);
+    if (isArchived) {
+      await supabase.from('archived_conversations').delete()
+        .eq('user_id', user.id)
+        .eq('conversation_id', conversationId);
+    } else {
+      await supabase.from('archived_conversations').insert({
+        user_id: user.id,
+        conversation_id: conversationId,
+      });
+    }
+    fetchArchivedConversations();
+    fetchConversations();
+  };
+
+  // Block a user
+  const blockUser = async (blockedId: string) => {
+    if (!user || blockedUserIds.has(blockedId)) return;
+    await supabase.from('blocked_users').insert({
+      blocker_id: user.id,
+      blocked_id: blockedId,
+    });
+    fetchBlockedUsers();
+    setActiveUserId(null);
+  };
+
+  // Toggle bookmark for a user
+  const toggleBookmark = async (bookmarkedId: string) => {
+    if (!user) return;
+    const isBookmarked = bookmarkedUserIds.has(bookmarkedId);
+    if (isBookmarked) {
+      await supabase.from('bookmarked_users').delete()
+        .eq('user_id', user.id)
+        .eq('bookmarked_id', bookmarkedId);
+    } else {
+      await supabase.from('bookmarked_users').insert({
+        user_id: user.id,
+        bookmarked_id: bookmarkedId,
+      });
+    }
+    fetchBookmarkedUsers();
   };
 
   // Fetch conversations and group by user
@@ -172,14 +325,22 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
         const otherUser = convo.buyer_id === user.id ? convo.seller : convo.buyer;
         if (!otherUser) continue;
 
+        // Skip blocked users
+        if (blockedUserIds.has(otherUser.id)) continue;
+
         const existing = userMap.get(otherUser.id);
         if (existing) {
           existing.conversations.push(convo);
         } else {
+          // Check if any conversation with this user is archived
+          const isArchived = archivedConvoIds.has(convo.id);
           userMap.set(otherUser.id, {
             otherUser,
             conversations: [convo],
             unreadCount: 0,
+            isArchived,
+            isBlocked: false,
+            isBookmarked: bookmarkedUserIds.has(otherUser.id),
           });
         }
       }
@@ -187,6 +348,9 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       // Fetch last message and unread count for each user
       for (const [userId, chat] of userMap) {
         const convoIds = chat.conversations.map(c => c.id);
+
+        // Update isArchived if ALL conversations are archived
+        chat.isArchived = convoIds.every(id => archivedConvoIds.has(id));
 
         // Get last message
         const { data: lastMsg } = await supabase
@@ -221,7 +385,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
 
       setUserChats(sorted);
     }
-  }, [user]);
+  }, [user, blockedUserIds, archivedConvoIds, bookmarkedUserIds]);
 
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
@@ -415,11 +579,10 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   if (!user) return null;
 
   const activeUserChat = activeUserId ? userChats.find(c => c.otherUser.id === activeUserId) : null;
-  const size = SIZES[chatSize];
 
   // Default positions
   const defaultMinPosition = { x: window.innerWidth - 64, y: window.innerHeight - 120 };
-  const defaultOpenPosition = { x: window.innerWidth - size.width - 24, y: window.innerHeight - size.height - 24 };
+  const defaultOpenPosition = { x: window.innerWidth - chatSize.width - 24, y: window.innerHeight - chatSize.height - 24 };
 
   const currentMinPosition = minimizedPosition || defaultMinPosition;
 
@@ -467,7 +630,8 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
         >
           <div
             onClick={(e) => {
-              if (!isDragging) {
+              // Only open if we didn't drag
+              if (!hasDragged) {
                 setMode('open');
               }
             }}
@@ -503,14 +667,55 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
         <div
           ref={panelRef}
           className={`fixed z-50 bg-[#0c0c10] border border-gray-800 rounded-xl shadow-2xl flex flex-col overflow-hidden ${
-            isDragging ? '' : 'animate-in slide-in-from-bottom-2 duration-200'
+            isDragging || isResizing ? '' : 'animate-in slide-in-from-bottom-2 duration-200'
           }`}
           style={{
-            width: size.width,
-            height: size.height,
+            width: chatSize.width,
+            height: chatSize.height,
             ...(position ? { left: position.x, top: position.y } : { right: 24, bottom: 24 }),
           }}
         >
+          {/* Resize handles */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Corner handles */}
+            <div
+              className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize pointer-events-auto"
+              onMouseDown={(e) => handleResizeStart(e, 'nw')}
+            />
+            <div
+              className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize pointer-events-auto"
+              onMouseDown={(e) => handleResizeStart(e, 'ne')}
+            />
+            <div
+              className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize pointer-events-auto"
+              onMouseDown={(e) => handleResizeStart(e, 'sw')}
+            />
+            <div
+              className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize pointer-events-auto hover:bg-amber-500/20 rounded-bl transition-colors"
+              onMouseDown={(e) => handleResizeStart(e, 'se')}
+            >
+              <svg className="w-3 h-3 text-muted/50" viewBox="0 0 12 12">
+                <path d="M11 11L11 7M11 11L7 11M11 11L4 4M8 11L11 8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+              </svg>
+            </div>
+            {/* Edge handles */}
+            <div
+              className="absolute top-0 left-3 right-3 h-1 cursor-n-resize pointer-events-auto"
+              onMouseDown={(e) => handleResizeStart(e, 'n')}
+            />
+            <div
+              className="absolute bottom-0 left-3 right-3 h-1 cursor-s-resize pointer-events-auto"
+              onMouseDown={(e) => handleResizeStart(e, 's')}
+            />
+            <div
+              className="absolute left-0 top-3 bottom-3 w-1 cursor-w-resize pointer-events-auto"
+              onMouseDown={(e) => handleResizeStart(e, 'w')}
+            />
+            <div
+              className="absolute right-0 top-3 bottom-3 w-1 cursor-e-resize pointer-events-auto"
+              onMouseDown={(e) => handleResizeStart(e, 'e')}
+            />
+          </div>
           {/* Header */}
           <div
             className={`flex items-center justify-between px-3 py-2 border-b border-gray-800 ${
@@ -557,35 +762,6 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
 
             {/* Controls */}
             <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
-              {/* Size buttons */}
-              <button
-                onClick={() => setChatSize('small')}
-                className={`p-1.5 rounded transition-colors ${chatSize === 'small' ? 'bg-amber-500/20 text-amber-400' : 'text-muted hover:text-foreground'}`}
-                title="Small"
-              >
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
-                  <rect x="4" y="4" width="8" height="8" rx="1" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setChatSize('medium')}
-                className={`p-1.5 rounded transition-colors ${chatSize === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'text-muted hover:text-foreground'}`}
-                title="Medium"
-              >
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
-                  <rect x="3" y="3" width="10" height="10" rx="1" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setChatSize('large')}
-                className={`p-1.5 rounded transition-colors ${chatSize === 'large' ? 'bg-amber-500/20 text-amber-400' : 'text-muted hover:text-foreground'}`}
-                title="Large"
-              >
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
-                  <rect x="2" y="2" width="12" height="12" rx="1" />
-                </svg>
-              </button>
-
               {/* Reset position */}
               {position && (
                 <button onClick={resetPosition} className="p-1.5 text-muted hover:text-foreground rounded" title="Reset position">

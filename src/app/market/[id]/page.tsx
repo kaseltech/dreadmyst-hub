@@ -126,9 +126,9 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
   }
 
   async function copyWhisperCommand() {
-    if (!seller?.in_game_name || !listing) return;
+    if (!seller?.in_game_name) return;
 
-    const command = generateWhisperCommand(seller.in_game_name, listing.item_name, listing.price);
+    const command = generateWhisperCommand(seller.in_game_name);
     await navigator.clipboard.writeText(command);
     setWhisperCopied(true);
     setTimeout(() => setWhisperCopied(false), 2000);

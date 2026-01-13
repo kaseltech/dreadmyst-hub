@@ -14,6 +14,7 @@ interface AuthContextType {
   signInWithDiscord: () => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   signInWithDiscord: async () => {},
   signOut: async () => {},
   updateProfile: () => {},
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -128,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               avatar_url: avatar,
               in_game_name: null,
               is_admin: false,
+              hide_ign: false,
               created_at: new Date().toISOString(),
             });
           } else {
@@ -148,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
           in_game_name: null,
           is_admin: false,
+          hide_ign: false,
           created_at: new Date().toISOString(),
         });
       }
@@ -170,8 +174,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) console.error('Error signing out:', error);
   }
 
+  async function refreshProfile() {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, signInWithDiscord, signOut, updateProfile }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, signInWithDiscord, signOut, updateProfile, refreshProfile }}>
       {children}
       {user && showCharacterPrompt && (
         <CharacterNamePrompt

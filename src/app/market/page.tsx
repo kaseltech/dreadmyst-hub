@@ -108,11 +108,6 @@ export default function MarketPage() {
       result = result.filter(listing => (listing.level_requirement || 1) <= filters.maxLevel!);
     }
 
-    // My listings only
-    if (filters.showMyListings && user) {
-      result = result.filter(listing => listing.seller_id === user.id);
-    }
-
     // Sorting
     result.sort((a, b) => {
       switch (filters.sortBy) {
@@ -175,7 +170,6 @@ export default function MarketPage() {
           filters={filters}
           onChange={setFilters}
           resultCount={filteredListings.length}
-          isLoggedIn={!!user}
         />
 
         {/* Loading */}

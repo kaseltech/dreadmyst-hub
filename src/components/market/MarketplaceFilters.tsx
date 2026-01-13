@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ItemCategory } from '@/lib/supabase';
 import { ItemTier, TIER_CONFIG, STAT_CONFIG, ItemStatType } from '@/types/items';
+import { Layers, Swords, Shield, CircleDot, FlaskConical, Package, Sparkles } from 'lucide-react';
 
 // All available stats for filtering - grouped by category
 const ALL_STATS = (Object.entries(STAT_CONFIG) as [ItemStatType, typeof STAT_CONFIG[ItemStatType]][])
@@ -33,14 +34,24 @@ const STAT_GROUPS = [
   },
 ];
 
-const categories: { value: ItemCategory | 'all'; label: string; icon: string }[] = [
-  { value: 'all', label: 'All', icon: '🎒' },
-  { value: 'weapons', label: 'Weapons', icon: '⚔️' },
-  { value: 'armor', label: 'Armor', icon: '🛡️' },
-  { value: 'accessories', label: 'Accessories', icon: '💍' },
-  { value: 'consumables', label: 'Consumables', icon: '🧪' },
-  { value: 'materials', label: 'Materials', icon: '📦' },
-  { value: 'other', label: 'Other', icon: '✨' },
+const categoryIcons: Record<ItemCategory | 'all', React.ComponentType<{ className?: string }>> = {
+  all: Layers,
+  weapons: Swords,
+  armor: Shield,
+  accessories: CircleDot,
+  consumables: FlaskConical,
+  materials: Package,
+  other: Sparkles,
+};
+
+const categories: { value: ItemCategory | 'all'; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'weapons', label: 'Weapons' },
+  { value: 'armor', label: 'Armor' },
+  { value: 'accessories', label: 'Accessories' },
+  { value: 'consumables', label: 'Consumables' },
+  { value: 'materials', label: 'Materials' },
+  { value: 'other', label: 'Other' },
 ];
 
 const tiers: { value: ItemTier | 'all'; label: string }[] = [
@@ -63,7 +74,6 @@ export interface FilterState {
   minLevel: number | null;
   maxLevel: number | null;
   sortBy: 'newest' | 'price_low' | 'price_high' | 'level_low' | 'level_high';
-  showMyListings: boolean;
 }
 
 export const defaultFilters: FilterState = {
@@ -78,21 +88,18 @@ export const defaultFilters: FilterState = {
   minLevel: null,
   maxLevel: null,
   sortBy: 'newest',
-  showMyListings: false,
 };
 
 interface MarketplaceFiltersProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
   resultCount: number;
-  isLoggedIn: boolean;
 }
 
 export default function MarketplaceFilters({
   filters,
   onChange,
   resultCount,
-  isLoggedIn,
 }: MarketplaceFiltersProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -107,7 +114,6 @@ export default function MarketplaceFilters({
     filters.maxPrice !== null,
     filters.minLevel !== null,
     filters.maxLevel !== null,
-    filters.showMyListings,
   ].filter(Boolean).length;
 
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
@@ -146,7 +152,7 @@ export default function MarketplaceFilters({
   // Quick filter presets
   const presets = [
     { label: 'Has Sockets', action: () => updateFilter('minSockets', 1) },
-    { label: 'High Tier', action: () => onChange({ ...filters, tier: 'all', stats: [], minSockets: 0, maxSockets: 3, minPrice: null, maxPrice: null, minLevel: null, maxLevel: null, showMyListings: false, category: filters.category, search: filters.search, sortBy: filters.sortBy }) },
+    { label: 'High Tier', action: () => onChange({ ...filters, tier: 'godly' }) },
     { label: 'Budget (<10K)', action: () => updateFilter('maxPrice', 10000) },
   ];
 
@@ -164,7 +170,7 @@ export default function MarketplaceFilters({
           value={filters.search}
           onChange={(e) => updateFilter('search', e.target.value)}
           className="w-full pl-10 pr-4 py-3 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.1)' }}
         />
         {filters.search && (
           <button
@@ -182,24 +188,27 @@ export default function MarketplaceFilters({
       <div>
         <label className="block text-xs font-medium text-muted mb-2 uppercase tracking-wider">Category</label>
         <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => updateFilter('category', cat.value)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 ${
-                filters.category === cat.value
-                  ? 'text-white'
-                  : 'hover:text-white/80'
-              }`}
-              style={filters.category === cat.value
-                ? { background: 'linear-gradient(135deg, #a84b08, #d97706)', border: '1px solid transparent' }
-                : { background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.65)' }
-              }
-            >
-              <span>{cat.icon}</span>
-              <span>{cat.label}</span>
-            </button>
-          ))}
+          {categories.map((cat) => {
+            const Icon = categoryIcons[cat.value];
+            return (
+              <button
+                key={cat.value}
+                onClick={() => updateFilter('category', cat.value)}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 ${
+                  filters.category === cat.value
+                    ? 'text-white'
+                    : 'hover:text-white/80'
+                }`}
+                style={filters.category === cat.value
+                  ? { background: 'linear-gradient(135deg, #a84b08, #d97706)', border: '1px solid transparent' }
+                  : { background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.65)' }
+                }
+              >
+                <Icon className="w-4 h-4" />
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -243,14 +252,22 @@ export default function MarketplaceFilters({
         <select
           value={filters.sortBy}
           onChange={(e) => updateFilter('sortBy', e.target.value as FilterState['sortBy'])}
-          className="w-full px-3 py-2 rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+          className="w-full px-3 py-2.5 rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/50 appearance-none cursor-pointer"
+          style={{
+            background: '#1a1a24',
+            border: '1px solid rgba(255,255,255,0.1)',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 0.75rem center',
+            backgroundSize: '1.25rem',
+            paddingRight: '2.5rem',
+          }}
         >
-          <option value="newest">Newest First</option>
-          <option value="price_low">Price: Low → High</option>
-          <option value="price_high">Price: High → Low</option>
-          <option value="level_low">Level: Low → High</option>
-          <option value="level_high">Level: High → Low</option>
+          <option value="newest" style={{ background: '#1a1a24', color: '#e5e5e5' }}>Newest First</option>
+          <option value="price_low" style={{ background: '#1a1a24', color: '#e5e5e5' }}>Price: Low → High</option>
+          <option value="price_high" style={{ background: '#1a1a24', color: '#e5e5e5' }}>Price: High → Low</option>
+          <option value="level_low" style={{ background: '#1a1a24', color: '#e5e5e5' }}>Level: Low → High</option>
+          <option value="level_high" style={{ background: '#1a1a24', color: '#e5e5e5' }}>Level: High → Low</option>
         </select>
       </div>
 
@@ -375,7 +392,7 @@ export default function MarketplaceFilters({
                 onBlur={(e) => handlePriceInput('min', e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handlePriceInput('min', (e.target as HTMLInputElement).value)}
                 className="flex-1 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.1)' }}
               />
               <span className="text-muted">—</span>
               <input
@@ -385,7 +402,7 @@ export default function MarketplaceFilters({
                 onBlur={(e) => handlePriceInput('max', e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handlePriceInput('max', (e.target as HTMLInputElement).value)}
                 className="flex-1 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.1)' }}
               />
             </div>
           </div>
@@ -394,40 +411,66 @@ export default function MarketplaceFilters({
           <div>
             <label className="block text-xs font-medium text-muted mb-2 uppercase tracking-wider">Level Requirement</label>
             <div className="flex items-center gap-2">
-              <input
-                type="number"
-                placeholder="Min"
-                min="1"
-                max="25"
-                value={filters.minLevel || ''}
-                onChange={(e) => updateFilter('minLevel', e.target.value ? parseInt(e.target.value) : null)}
-                className="w-20 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  min="1"
+                  max="25"
+                  value={filters.minLevel || ''}
+                  onChange={(e) => updateFilter('minLevel', e.target.value ? parseInt(e.target.value) : null)}
+                  className="w-24 px-3 py-2 pr-8 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.1)' }}
+                />
+                <div className="absolute right-1 inset-y-1 flex flex-col justify-center">
+                  <button
+                    type="button"
+                    onClick={() => updateFilter('minLevel', Math.min(25, (filters.minLevel || 0) + 1))}
+                    className="px-1 h-3 flex items-center justify-center text-muted hover:text-amber-400 transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateFilter('minLevel', Math.max(1, (filters.minLevel || 2) - 1))}
+                    className="px-1 h-3 flex items-center justify-center text-muted hover:text-amber-400 transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                </div>
+              </div>
               <span className="text-muted">—</span>
-              <input
-                type="number"
-                placeholder="Max"
-                min="1"
-                max="25"
-                value={filters.maxLevel || ''}
-                onChange={(e) => updateFilter('maxLevel', e.target.value ? parseInt(e.target.value) : null)}
-                className="w-20 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="Max"
+                  min="1"
+                  max="25"
+                  value={filters.maxLevel || ''}
+                  onChange={(e) => updateFilter('maxLevel', e.target.value ? parseInt(e.target.value) : null)}
+                  className="w-24 px-3 py-2 pr-8 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.1)' }}
+                />
+                <div className="absolute right-1 inset-y-1 flex flex-col justify-center">
+                  <button
+                    type="button"
+                    onClick={() => updateFilter('maxLevel', Math.min(25, (filters.maxLevel || 0) + 1))}
+                    className="px-1 h-3 flex items-center justify-center text-muted hover:text-amber-400 transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateFilter('maxLevel', Math.max(1, (filters.maxLevel || 2) - 1))}
+                    className="px-1 h-3 flex items-center justify-center text-muted hover:text-amber-400 transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                </div>
+              </div>
               <span className="text-xs text-muted">(1-25)</span>
             </div>
           </div>
-
-          {/* My Listings Toggle */}
-          {isLoggedIn && (
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div className={`relative w-10 h-6 rounded-full transition-colors ${filters.showMyListings ? 'bg-accent' : 'bg-card-border'}`}>
-                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${filters.showMyListings ? 'translate-x-5' : 'translate-x-1'}`} />
-              </div>
-              <span className="text-sm">Show only my listings</span>
-            </label>
-          )}
 
           {/* Clear All */}
           {activeFilterCount > 0 && (

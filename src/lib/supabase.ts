@@ -79,7 +79,46 @@ export interface Profile {
   in_game_name: string | null;
   avatar_url: string | null;
   is_admin: boolean;
+  hide_ign: boolean;
   created_at: string;
+}
+
+// Character/alt types
+export interface Character {
+  id: string;
+  user_id: string;
+  name: string;
+  is_primary: boolean;
+  class_name: string | null;
+  level: number;
+  notes: string | null;
+  created_at: string;
+}
+
+// Chat feature types
+export interface ArchivedConversation {
+  id: string;
+  user_id: string;
+  conversation_id: string;
+  archived_at: string;
+}
+
+export interface BlockedUser {
+  id: string;
+  blocker_id: string;
+  blocked_id: string;
+  blocked_at: string;
+  reason: string | null;
+  blocked_profile?: Profile;
+}
+
+export interface BookmarkedUser {
+  id: string;
+  user_id: string;
+  bookmarked_id: string;
+  nickname: string | null;
+  created_at: string;
+  bookmarked_profile?: Profile;
 }
 
 export type ItemCategory = 'weapons' | 'armor' | 'accessories' | 'consumables' | 'materials' | 'other';

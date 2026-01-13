@@ -15,6 +15,25 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: '0.6.0',
+    date: 'January 13, 2026',
+    title: 'Profile & Chat Improvements',
+    changes: [
+      { type: 'new', text: 'Profile page - manage your IGN, characters/alts, and friends' },
+      { type: 'new', text: 'Character management - add multiple characters and set a primary' },
+      { type: 'new', text: 'Friends list - bookmark users for quick access' },
+      { type: 'new', text: 'Block users - prevent unwanted messages from specific users' },
+      { type: 'new', text: 'Archive chats - hide completed trade conversations' },
+      { type: 'new', text: 'Lucide icons - cleaner category icons in Trade filters' },
+      { type: 'improved', text: 'Chat widget now resizable - drag corners to resize' },
+      { type: 'improved', text: 'Chat icon no longer opens on drag - proper click detection' },
+      { type: 'improved', text: 'Form styling - fixed white-on-white dropdowns and inputs' },
+      { type: 'improved', text: 'Custom number input controls - styled up/down buttons' },
+      { type: 'fixed', text: 'Whisper command simplified to /w charactername (game limitation)' },
+      { type: 'fixed', text: 'Removed duplicate messages page - use floating chat widget' },
+    ],
+  },
+  {
     version: '0.5.0',
     date: 'January 12, 2026',
     title: 'Rebrand & Build System',
