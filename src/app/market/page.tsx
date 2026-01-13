@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase, Listing } from '@/lib/supabase';
+import { createBrowserClient } from '@supabase/ssr';
+import { Listing } from '@/lib/supabase';
+
+// Create fresh client for each fetch to avoid stale connections
+function getSupabase() {
+  return createBrowserClient(
+    'https://vnafrwxtxadddpbnfdgr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuYWZyd3h0eGFkZGRwYm5mZGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNjAzMjQsImV4cCI6MjA4MzgzNjMyNH0.fAbkswHI8ex_AxQI7zoIZfR82OCChrMjJDQoadDnaTg'
+  );
+}
 import { useAuth } from '@/components/AuthProvider';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { ItemTier } from '@/types/items';
@@ -42,7 +51,9 @@ export default function MarketPage() {
     const startTime = Date.now();
 
     try {
-      const { data, error } = await supabase
+      // Use fresh client to avoid stale connection issues
+      const client = getSupabase();
+      const { data, error } = await client
         .from('listings')
         .select('*, seller:profiles(*)')
         .eq('status', 'active')

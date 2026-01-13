@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase, Build } from '@/lib/supabase';
+import { createBrowserClient } from '@supabase/ssr';
+import { Build } from '@/lib/supabase';
+
+// Create fresh client for each fetch to avoid stale connections
+function getSupabase() {
+  return createBrowserClient(
+    'https://vnafrwxtxadddpbnfdgr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuYWZyd3h0eGFkZGRwYm5mZGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNjAzMjQsImV4cCI6MjA4MzgzNjMyNH0.fAbkswHI8ex_AxQI7zoIZfR82OCChrMjJDQoadDnaTg'
+  );
+}
 
 const classes = ['All', 'Warrior', 'Mage', 'Rogue', 'Healer'];
 
@@ -22,7 +31,9 @@ export default function BuildsPage() {
     const startTime = Date.now();
 
     try {
-      const { data, error } = await supabase
+      // Use fresh client to avoid stale connection issues
+      const client = getSupabase();
+      const { data, error } = await client
         .from('builds')
         .select('*')
         .order('created_at', { ascending: false });
