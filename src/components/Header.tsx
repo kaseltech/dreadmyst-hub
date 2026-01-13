@@ -47,6 +47,28 @@ export default function Header() {
               const isActive = pathname === item.href ||
                 (item.href !== '/' && pathname.startsWith(item.href));
 
+              // Special styling for Trade (highlighted item)
+              if (item.highlight) {
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`relative px-4 py-1.5 text-[14px] font-semibold tracking-[0.04em] transition-all duration-200 rounded-lg ${
+                      isActive
+                        ? 'text-white'
+                        : 'text-white hover:scale-105'
+                    }`}
+                    style={{
+                      fontFamily: 'Inter, system-ui, sans-serif',
+                      background: 'linear-gradient(135deg, #b45309, #d97706)',
+                      boxShadow: isActive ? '0 0 12px rgba(217, 119, 6, 0.4)' : '0 2px 8px rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}
@@ -72,6 +94,19 @@ export default function Header() {
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/' && pathname.startsWith(item.href));
+
+              if (item.highlight) {
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="px-2.5 py-1 rounded-md text-xs font-semibold text-white"
+                    style={{ background: 'linear-gradient(135deg, #b45309, #d97706)' }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
 
               return (
                 <Link
