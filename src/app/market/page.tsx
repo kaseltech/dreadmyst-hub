@@ -255,7 +255,7 @@ export default function MarketPage() {
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-3 border-t border-card-border">
                     <span className="text-lg font-bold text-yellow-500">
-                      {formatGoldShort(listing.price)}g
+                      {formatGoldShort(listing.price)} Gold
                     </span>
                     <span className="text-xs text-muted truncate max-w-[120px]">
                       {listing.seller?.username || 'Unknown'}
