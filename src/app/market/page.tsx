@@ -42,24 +42,33 @@ export default function MarketPage() {
     const startTime = Date.now();
 
     try {
+      // Add 10 second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const { data, error } = await supabase
         .from('listings')
         .select('*, seller:profiles(*)')
         .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(controller.signal);
 
+      clearTimeout(timeoutId);
       console.log('[Market] Fetch completed in', Date.now() - startTime, 'ms');
 
       if (error) {
         console.error('[Market] Supabase error:', error);
-        alert('Error loading listings: ' + error.message);
       } else {
         console.log('[Market] Got', data?.length || 0, 'listings');
         setListings(data || []);
       }
-    } catch (err) {
-      console.error('[Market] Exception:', err);
-      alert('Exception loading listings: ' + (err as Error).message);
+    } catch (err: unknown) {
+      const errorName = err instanceof Error ? err.name : 'Unknown';
+      if (errorName === 'AbortError') {
+        console.error('[Market] Request timed out after 10s');
+      } else {
+        console.error('[Market] Exception:', err);
+      }
     }
 
     setLoading(false);

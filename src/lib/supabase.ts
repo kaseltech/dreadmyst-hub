@@ -59,7 +59,9 @@ export interface Build {
   equipment: string | null;
   playstyle: string | null;
   author_name: string;
+  author_id?: string | null;
   created_at: string;
+  updated_at?: string | null;
   upvotes: number;
   tags: string[];
   // New structured fields

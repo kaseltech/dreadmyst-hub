@@ -22,23 +22,32 @@ export default function BuildsPage() {
     const startTime = Date.now();
 
     try {
+      // Add 10 second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const { data, error } = await supabase
         .from('builds')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(controller.signal);
 
+      clearTimeout(timeoutId);
       console.log('[Builds] Fetch completed in', Date.now() - startTime, 'ms');
 
       if (error) {
         console.error('[Builds] Supabase error:', error);
-        alert('Error loading builds: ' + error.message);
       } else {
         console.log('[Builds] Got', data?.length || 0, 'builds');
         setBuilds(data || []);
       }
-    } catch (err) {
-      console.error('[Builds] Exception:', err);
-      alert('Exception loading builds: ' + (err as Error).message);
+    } catch (err: unknown) {
+      const errorName = err instanceof Error ? err.name : 'Unknown';
+      if (errorName === 'AbortError') {
+        console.error('[Builds] Request timed out after 10s');
+      } else {
+        console.error('[Builds] Exception:', err);
+      }
     }
 
     setLoading(false);

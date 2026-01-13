@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, BuildStats, BuildAbilities } from '@/lib/supabase';
+import { supabase, Build, BuildStats, BuildAbilities } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { CLASS_DATA, ClassName, BASE_STATS, GENERAL_STATS, COMBAT_STATS, SKILL_STATS } from '@/lib/class-data';
 
 const tagOptions = ['PvE', 'PvP', 'DPS', 'Tank', 'Healer', 'Support', 'Solo', 'Group', 'Beginner-Friendly', 'Endgame', 'AoE', 'Speed'];
 
-export default function NewBuildPage() {
+export default function EditBuildPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const { user, profile, loading: authLoading, signInWithDiscord } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
+  const [build, setBuild] = useState<Build | null>(null);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedClass, setSelectedClass] = useState<ClassName | ''>('');
   const [formData, setFormData] = useState({
@@ -22,7 +25,6 @@ export default function NewBuildPage() {
     youtubeUrl: '',
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  // Use string values to allow empty input
   const [baseStats, setBaseStats] = useState<Record<string, string>>({
     strength: '5',
     agility: '5',
@@ -37,9 +39,86 @@ export default function NewBuildPage() {
 
   const classData = selectedClass ? CLASS_DATA[selectedClass] : null;
 
+  useEffect(() => {
+    fetchBuild();
+  }, [id]);
+
+  async function fetchBuild() {
+    const { data, error } = await supabase
+      .from('builds')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      console.error('Error fetching build:', error);
+      router.push('/builds');
+      return;
+    }
+
+    setBuild(data);
+
+    // Populate form with existing data
+    setFormData({
+      title: data.title || '',
+      description: data.description || '',
+      equipment: data.equipment || '',
+      playstyle: data.playstyle || '',
+      youtubeUrl: data.youtube_video_id ? `https://youtube.com/watch?v=${data.youtube_video_id}` : '',
+    });
+
+    setSelectedClass(data.class_name.toLowerCase() as ClassName);
+    setSelectedTags(data.tags || []);
+
+    // Base stats
+    if (data.base_stats) {
+      setBaseStats({
+        strength: String(data.base_stats.strength || 5),
+        agility: String(data.base_stats.agility || 5),
+        intelligence: String(data.base_stats.intelligence || 5),
+        willpower: String(data.base_stats.willpower || 5),
+        courage: String(data.base_stats.courage || 5),
+      });
+    }
+
+    // Secondary stats
+    if (data.secondary_stats) {
+      const general: Record<string, string> = {};
+      const combat: Record<string, string> = {};
+      const skill: Record<string, string> = {};
+
+      GENERAL_STATS.forEach(s => {
+        if (data.secondary_stats?.[s.id]) general[s.id] = String(data.secondary_stats[s.id]);
+      });
+      COMBAT_STATS.forEach(s => {
+        if (data.secondary_stats?.[s.id]) combat[s.id] = String(data.secondary_stats[s.id]);
+      });
+      SKILL_STATS.forEach(s => {
+        if (data.secondary_stats?.[s.id]) skill[s.id] = String(data.secondary_stats[s.id]);
+      });
+
+      setGeneralStats(general);
+      setCombatStats(combat);
+      setSkillStats(skill);
+    }
+
+    // Abilities
+    if (data.abilities) {
+      setAbilities(data.abilities);
+    }
+
+    setLoading(false);
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !profile || !selectedClass) return;
+    if (!user || !build || !selectedClass) return;
+
+    // Check permission
+    if (build.author_id !== user.id) {
+      alert('You do not have permission to edit this build.');
+      return;
+    }
 
     setSubmitting(true);
 
@@ -82,29 +161,29 @@ export default function NewBuildPage() {
       if (ytMatch) youtubeVideoId = ytMatch[1];
     }
 
-    const { error } = await supabase.from('builds').insert({
-      title: formData.title,
-      class_name: selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1),
-      description: formData.description,
-      skills: skillsText || null,
-      equipment: formData.equipment || null,
-      playstyle: formData.playstyle || null,
-      author_name: profile.username,
-      author_id: user.id,
-      tags: selectedTags,
-      upvotes: 0,
-      base_stats: baseStatsNum,
-      secondary_stats: Object.keys(allSecondaryStats).length > 0 ? allSecondaryStats : null,
-      abilities: Object.keys(abilities).length > 0 ? abilities : null,
-      youtube_video_id: youtubeVideoId,
-    });
+    const { error } = await supabase
+      .from('builds')
+      .update({
+        title: formData.title,
+        class_name: selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1),
+        description: formData.description,
+        skills: skillsText || null,
+        equipment: formData.equipment || null,
+        playstyle: formData.playstyle || null,
+        tags: selectedTags,
+        base_stats: baseStatsNum,
+        secondary_stats: Object.keys(allSecondaryStats).length > 0 ? allSecondaryStats : null,
+        abilities: Object.keys(abilities).length > 0 ? abilities : null,
+        youtube_video_id: youtubeVideoId,
+      })
+      .eq('id', id);
 
     if (error) {
-      console.error('Error submitting build:', error);
-      alert('Error submitting build. Please try again.');
+      console.error('Error updating build:', error);
+      alert('Error updating build: ' + error.message);
       setSubmitting(false);
     } else {
-      router.push('/builds');
+      router.push(`/builds/${id}`);
     }
   };
 
@@ -126,7 +205,7 @@ export default function NewBuildPage() {
     }));
   };
 
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <p className="text-muted">Loading...</p>
@@ -134,22 +213,26 @@ export default function NewBuildPage() {
     );
   }
 
-  if (!user || !profile) {
+  if (!user || !build) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-md mx-auto text-center">
-          <h1 className="text-3xl font-bold mb-4">Submit Your Build</h1>
-          <p className="text-muted mb-6">Sign in to submit a build</p>
-          <button
-            onClick={signInWithDiscord}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded-lg transition-colors"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-            </svg>
-            Sign in with Discord
-          </button>
-        </div>
+      <div className="container mx-auto px-4 py-12 text-center">
+        <h1 className="text-2xl font-bold mb-4">Build not found</h1>
+        <Link href="/builds" className="text-accent-light hover:text-accent">
+          ← Back to Builds
+        </Link>
+      </div>
+    );
+  }
+
+  // Check permission
+  if (build.author_id !== user.id) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+        <p className="text-muted mb-4">You do not have permission to edit this build.</p>
+        <Link href={`/builds/${id}`} className="text-accent-light hover:text-accent">
+          ← Back to Build
+        </Link>
       </div>
     );
   }
@@ -160,11 +243,13 @@ export default function NewBuildPage() {
         <nav className="text-sm text-muted mb-6">
           <Link href="/builds" className="hover:text-foreground transition-colors">Builds</Link>
           <span className="mx-2">/</span>
-          <span className="text-foreground">Submit New Build</span>
+          <Link href={`/builds/${id}`} className="hover:text-foreground transition-colors">{build.title}</Link>
+          <span className="mx-2">/</span>
+          <span className="text-foreground">Edit</span>
         </nav>
 
-        <h1 className="text-4xl font-bold mb-2">Submit Your Build</h1>
-        <p className="text-muted mb-8">Share your character build with the community</p>
+        <h1 className="text-4xl font-bold mb-2">Edit Build</h1>
+        <p className="text-muted mb-8">Update your character build</p>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Section 1: Basic Info */}
@@ -450,11 +535,11 @@ export default function NewBuildPage() {
           {/* Submit */}
           <div className="flex items-center justify-between pt-4">
             <span className="text-sm text-muted">
-              Submitting as <span className="text-foreground">{profile.username}</span>
+              Editing as <span className="text-foreground">{profile?.username}</span>
             </span>
             <div className="flex gap-4">
               <Link
-                href="/builds"
+                href={`/builds/${id}`}
                 className="px-6 py-3 border border-card-border text-muted hover:text-foreground font-semibold rounded-lg transition-colors"
               >
                 Cancel
@@ -464,7 +549,7 @@ export default function NewBuildPage() {
                 disabled={submitting || !selectedClass}
                 className="px-8 py-3 bg-accent hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
               >
-                {submitting ? 'Submitting...' : 'Submit Build'}
+                {submitting ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>

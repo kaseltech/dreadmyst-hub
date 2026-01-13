@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase, Build } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { CLASS_DATA, BASE_STATS, GENERAL_STATS, COMBAT_STATS, SKILL_STATS, ClassName } from '@/lib/class-data';
@@ -16,11 +17,17 @@ function formatDate(dateString: string): string {
 
 export default function BuildPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { user, signInWithDiscord } = useAuth();
+  const router = useRouter();
+  const { user, profile, signInWithDiscord } = useAuth();
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasVoted, setHasVoted] = useState(false);
   const [voting, setVoting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Check if current user can edit/delete this build
+  const canEdit = build && user && build.author_id === user.id;
+  const canDelete = build && user && (build.author_id === user.id || profile?.is_admin);
 
   useEffect(() => {
     fetchBuild();
@@ -96,6 +103,28 @@ export default function BuildPage({ params }: { params: Promise<{ id: string }> 
     setVoting(false);
   }
 
+  async function handleDelete() {
+    if (!build || !canDelete || deleting) return;
+
+    if (!confirm('Are you sure you want to delete this build? This cannot be undone.')) {
+      return;
+    }
+
+    setDeleting(true);
+    const { error } = await supabase
+      .from('builds')
+      .delete()
+      .eq('id', build.id);
+
+    if (error) {
+      console.error('Error deleting build:', error);
+      alert('Error deleting build: ' + error.message);
+      setDeleting(false);
+    } else {
+      router.push('/builds');
+    }
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
@@ -142,6 +171,27 @@ export default function BuildPage({ params }: { params: Promise<{ id: string }> 
             <p className="text-muted">
               by <span className="text-foreground">{build.author_name}</span> • {formatDate(build.created_at)}
             </p>
+            {(canEdit || canDelete) && (
+              <div className="flex gap-2 mt-3">
+                {canEdit && (
+                  <Link
+                    href={`/builds/${build.id}/edit`}
+                    className="px-4 py-2 text-sm bg-accent hover:bg-accent-light text-white rounded-lg transition-colors"
+                  >
+                    Edit Build
+                  </Link>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                  >
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex flex-col items-center p-4 rounded-lg bg-card-bg border border-card-border">
             {user ? (
