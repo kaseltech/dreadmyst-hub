@@ -1,5 +1,6 @@
 'use client';
 
+// Auth context for Discord login
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, Profile } from '@/lib/supabase';
