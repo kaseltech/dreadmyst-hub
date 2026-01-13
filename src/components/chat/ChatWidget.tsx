@@ -297,7 +297,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       .select('conversation_id')
       .eq('user_id', user.id);
     if (data) {
-      setArchivedConvoIds(new Set(data.map(d => d.conversation_id)));
+      setArchivedConvoIds(new Set(data.map((d: { conversation_id: string }) => d.conversation_id)));
     }
   }, [user]);
 
@@ -309,7 +309,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       .select('blocked_id')
       .eq('blocker_id', user.id);
     if (data) {
-      setBlockedUserIds(new Set(data.map(d => d.blocked_id)));
+      setBlockedUserIds(new Set(data.map((d: { blocked_id: string }) => d.blocked_id)));
     }
   }, [user]);
 
@@ -321,7 +321,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       .select('bookmarked_id')
       .eq('user_id', user.id);
     if (data) {
-      setBookmarkedUserIds(new Set(data.map(d => d.bookmarked_id)));
+      setBookmarkedUserIds(new Set(data.map((d: { bookmarked_id: string }) => d.bookmarked_id)));
     }
   }, [user]);
 
