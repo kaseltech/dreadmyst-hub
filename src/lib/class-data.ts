@@ -102,9 +102,11 @@ export const BASE_STATS = [
 
 // Secondary/derived stats
 export const SECONDARY_STATS = [
-  { id: 'health', name: 'Health', color: 'text-red-300' },
-  { id: 'mana', name: 'Mana', color: 'text-blue-300' },
-  { id: 'stamina', name: 'Stamina', color: 'text-green-300' },
+  { id: 'health', name: 'Health', abbrev: 'HP', color: 'text-red-300' },
+  { id: 'mana', name: 'Mana', abbrev: 'MP', color: 'text-blue-300' },
+  { id: 'armorValue', name: 'Armor Value', abbrev: 'ARM', color: 'text-slate-300' },
+  { id: 'regeneration', name: 'Regeneration', abbrev: 'REG', color: 'text-pink-400' },
+  { id: 'meditate', name: 'Meditate', abbrev: 'MED', color: 'text-indigo-400' },
 ] as const;
 
 // Helper to get class data

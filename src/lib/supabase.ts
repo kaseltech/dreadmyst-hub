@@ -18,7 +18,9 @@ export interface BuildStats {
 export interface BuildSecondaryStats {
   health?: number;
   mana?: number;
-  stamina?: number;
+  armorValue?: number;
+  regeneration?: number;
+  meditate?: number;
 }
 
 export interface BuildAbilities {

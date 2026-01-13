@@ -1,21 +1,17 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { STAT_CONFIG, PrimaryStat } from '@/types/items';
+import { STAT_CONFIG, ItemStatType } from '@/types/items';
 
-// Extended stats list for items
-const ALL_STATS = [
-  { id: 'strength', label: 'Strength', abbrev: 'STR', color: 'text-red-400' },
-  { id: 'agility', label: 'Agility', abbrev: 'AGI', color: 'text-green-400' },
-  { id: 'intelligence', label: 'Intelligence', abbrev: 'INT', color: 'text-blue-400' },
-  { id: 'willpower', label: 'Willpower', abbrev: 'WIL', color: 'text-purple-400' },
-  { id: 'courage', label: 'Courage', abbrev: 'CRG', color: 'text-yellow-400' },
-  { id: 'weaponValue', label: 'Weapon Value', abbrev: 'WPN', color: 'text-orange-400' },
-  { id: 'armorValue', label: 'Armor Value', abbrev: 'ARM', color: 'text-cyan-400' },
-  { id: 'health', label: 'Health', abbrev: 'HP', color: 'text-red-300' },
-  { id: 'mana', label: 'Mana', abbrev: 'MP', color: 'text-blue-300' },
-  { id: 'stamina', label: 'Stamina', abbrev: 'STA', color: 'text-green-300' },
-];
+// Generate stats list from STAT_CONFIG - organized by category for better UX
+const ALL_STATS = (Object.entries(STAT_CONFIG) as [ItemStatType, typeof STAT_CONFIG[ItemStatType]][])
+  .map(([id, info]) => ({
+    id,
+    label: info.label,
+    abbrev: info.abbrev,
+    color: info.color,
+    category: info.category,
+  }));
 
 interface StatEntry {
   id: string;

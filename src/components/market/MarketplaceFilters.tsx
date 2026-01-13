@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { ItemCategory } from '@/lib/supabase';
-import { ItemTier, TIER_CONFIG, STAT_CONFIG, PrimaryStat } from '@/types/items';
+import { ItemTier, TIER_CONFIG, STAT_CONFIG, ItemStatType } from '@/types/items';
 
-// All available stats for filtering
-const ALL_STATS: { id: string; label: string; abbrev: string; color: string }[] = [
-  { id: 'strength', label: 'Strength', abbrev: 'STR', color: 'text-red-400' },
-  { id: 'agility', label: 'Agility', abbrev: 'AGI', color: 'text-green-400' },
-  { id: 'intelligence', label: 'Intelligence', abbrev: 'INT', color: 'text-blue-400' },
-  { id: 'willpower', label: 'Willpower', abbrev: 'WIL', color: 'text-purple-400' },
-  { id: 'courage', label: 'Courage', abbrev: 'CRG', color: 'text-yellow-400' },
-];
+// All available stats for filtering - grouped by category
+const ALL_STATS = (Object.entries(STAT_CONFIG) as [ItemStatType, typeof STAT_CONFIG[ItemStatType]][])
+  .map(([id, info]) => ({
+    id,
+    label: info.label,
+    abbrev: info.abbrev,
+    color: info.color,
+    category: info.category,
+  }));
 
 const categories: { value: ItemCategory | 'all'; label: string; icon: string }[] = [
   { value: 'all', label: 'All', icon: '🎒' },

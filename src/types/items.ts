@@ -63,21 +63,86 @@ export const BASE_TYPES: ItemBaseType[] = [
   { id: 'amulet', name: 'Amulet', slot: 'neck', category: 'accessories' },
 ];
 
-// Primary stats in the game
-export type PrimaryStat =
+// All item stats in the game
+export type ItemStatType =
+  // Primary Attributes
   | 'strength'
   | 'agility'
   | 'intelligence'
   | 'willpower'
-  | 'courage';
+  | 'courage'
+  // Secondary Stats
+  | 'health'
+  | 'mana'
+  | 'armorValue'
+  // Regeneration
+  | 'regeneration'
+  | 'meditate'
+  // Combat Values
+  | 'meleeValue'
+  | 'rangedValue'
+  | 'meleeCritical'
+  | 'rangedCritical'
+  | 'spellCritical'
+  // Defense
+  | 'dodgeRating'
+  | 'blockRating'
+  // Resistances
+  | 'resistFrost'
+  | 'resistFire'
+  | 'resistShadow'
+  | 'resistHoly';
 
-export const STAT_CONFIG: Record<PrimaryStat, { label: string; abbrev: string; color: string }> = {
-  strength: { label: 'Strength', abbrev: 'STR', color: 'text-red-400' },
-  agility: { label: 'Agility', abbrev: 'AGI', color: 'text-green-400' },
-  intelligence: { label: 'Intelligence', abbrev: 'INT', color: 'text-blue-400' },
-  willpower: { label: 'Willpower', abbrev: 'WIL', color: 'text-purple-400' },
-  courage: { label: 'Courage', abbrev: 'CRG', color: 'text-yellow-400' },
+// Primary attributes only (for builds)
+export type PrimaryStat = 'strength' | 'agility' | 'intelligence' | 'willpower' | 'courage';
+
+// Full stat configuration with categories
+export interface StatInfo {
+  label: string;
+  abbrev: string;
+  color: string;
+  category: 'primary' | 'secondary' | 'regen' | 'combat' | 'defense' | 'resist';
+}
+
+export const STAT_CONFIG: Record<ItemStatType, StatInfo> = {
+  // Primary Attributes
+  strength: { label: 'Strength', abbrev: 'STR', color: 'text-red-400', category: 'primary' },
+  agility: { label: 'Agility', abbrev: 'AGI', color: 'text-green-400', category: 'primary' },
+  intelligence: { label: 'Intelligence', abbrev: 'INT', color: 'text-blue-400', category: 'primary' },
+  willpower: { label: 'Willpower', abbrev: 'WIL', color: 'text-purple-400', category: 'primary' },
+  courage: { label: 'Courage', abbrev: 'CRG', color: 'text-yellow-400', category: 'primary' },
+  // Secondary Stats
+  health: { label: 'Health', abbrev: 'HP', color: 'text-red-300', category: 'secondary' },
+  mana: { label: 'Mana', abbrev: 'MP', color: 'text-blue-300', category: 'secondary' },
+  armorValue: { label: 'Armor Value', abbrev: 'ARM', color: 'text-slate-300', category: 'secondary' },
+  // Regeneration
+  regeneration: { label: 'Regeneration', abbrev: 'REG', color: 'text-pink-400', category: 'regen' },
+  meditate: { label: 'Meditate', abbrev: 'MED', color: 'text-indigo-400', category: 'regen' },
+  // Combat Values
+  meleeValue: { label: 'Melee Value', abbrev: 'MEL', color: 'text-orange-400', category: 'combat' },
+  rangedValue: { label: 'Ranged Value', abbrev: 'RNG', color: 'text-lime-400', category: 'combat' },
+  meleeCritical: { label: 'Melee Critical', abbrev: 'MCR', color: 'text-orange-300', category: 'combat' },
+  rangedCritical: { label: 'Ranged Critical', abbrev: 'RCR', color: 'text-lime-300', category: 'combat' },
+  spellCritical: { label: 'Spell Critical', abbrev: 'SCR', color: 'text-violet-400', category: 'combat' },
+  // Defense
+  dodgeRating: { label: 'Dodge Rating', abbrev: 'DOD', color: 'text-emerald-400', category: 'defense' },
+  blockRating: { label: 'Block Rating', abbrev: 'BLK', color: 'text-amber-400', category: 'defense' },
+  // Resistances
+  resistFrost: { label: 'Resist Frost', abbrev: 'FRS', color: 'text-cyan-400', category: 'resist' },
+  resistFire: { label: 'Resist Fire', abbrev: 'FIR', color: 'text-rose-400', category: 'resist' },
+  resistShadow: { label: 'Resist Shadow', abbrev: 'SHD', color: 'text-gray-400', category: 'resist' },
+  resistHoly: { label: 'Resist Holy', abbrev: 'HLY', color: 'text-amber-200', category: 'resist' },
 };
+
+// Helper to get stats by category
+export function getStatsByCategory(category: StatInfo['category']): ItemStatType[] {
+  return (Object.entries(STAT_CONFIG) as [ItemStatType, StatInfo][])
+    .filter(([_, info]) => info.category === category)
+    .map(([stat]) => stat);
+}
+
+// Primary stats only (legacy support)
+export const PRIMARY_STATS: PrimaryStat[] = ['strength', 'agility', 'intelligence', 'willpower', 'courage'];
 
 // Animals = stat combinations
 export interface SuffixAnimal {
@@ -100,25 +165,39 @@ export const SUFFIX_ANIMALS: SuffixAnimal[] = [
   { id: 'fox', name: 'Fox', primaryStat: 'intelligence', secondaryStat: 'agility' },
 ];
 
-// Effect types for modifiers
+// Effect types for modifiers (equip bonuses)
 export type EffectType =
+  // Stats
+  | 'health'
   | 'regeneration'
-  | 'weapon_value'
+  | 'meditate'
   | 'armor_value'
-  | 'resist_shadow'
+  | 'courage'
+  // Combat
+  | 'melee_value'
+  | 'ranged_value'
+  | 'melee_critical'
+  | 'ranged_critical'
+  | 'spell_critical'
+  // Defense
+  | 'dodge_rating'
+  | 'block_rating'
+  // Resistances
+  | 'resist_frost'
   | 'resist_fire'
-  | 'resist_cold'
-  | 'crit_melee'
-  | 'crit_ranged'
-  | 'crit_spell'
-  | 'skill_swords'
-  | 'skill_maces'
-  | 'skill_bows'
+  | 'resist_shadow'
+  | 'resist_holy'
+  // Weapon Skills
+  | 'skill_daggers'
   | 'skill_staves'
-  | 'block_chance'
-  | 'dodge_chance';
+  | 'skill_shields'
+  | 'skill_axes'
+  | 'skill_swords'
+  | 'skill_ranged'
+  | 'skill_wands'
+  | 'skill_maces';
 
-// Modifiers = bonus effects
+// Modifiers = bonus effects (known naming patterns)
 export interface SuffixModifier {
   id: string;
   name: string;
@@ -127,19 +206,26 @@ export interface SuffixModifier {
 }
 
 export const SUFFIX_MODIFIERS: SuffixModifier[] = [
-  { id: 'rejuvenating', name: 'Rejuvenating', effectType: 'regeneration', description: '+Regeneration' },
-  { id: 'butchering', name: 'Butchering', effectType: 'weapon_value', description: '+Weapon Value' },
-  { id: 'chaotic', name: 'Chaotic', effectType: 'resist_shadow', description: '+Shadow Resist' },
-  { id: 'dragonslayer', name: 'Dragonslayer', effectType: 'weapon_value', description: '+Weapon Value' },
-  { id: 'merciless', name: 'Merciless', effectType: 'crit_ranged', description: '+Ranged Crit' },
-  { id: 'diabolic', name: 'Diabolic', effectType: 'crit_spell', description: '+Spell Crit' },
+  // Stats
+  { id: 'undying', name: 'Undying', effectType: 'health', description: '+Health' },
+  { id: 'curative', name: 'Curative', effectType: 'regeneration', description: '+Regeneration' },
+  { id: 'concentrating', name: 'Concentrating', effectType: 'meditate', description: '+Meditate' },
+  { id: 'protective', name: 'Protective', effectType: 'armor_value', description: '+Armor Value' },
+  { id: 'brave', name: 'Brave', effectType: 'courage', description: '+Courage' },
+  // Combat
+  { id: 'piercing', name: 'Piercing', effectType: 'ranged_value', description: '+Ranged Value' },
+  { id: 'mutilating', name: 'Mutilating', effectType: 'melee_critical', description: '+Melee Critical' },
+  { id: 'deadly', name: 'Deadly', effectType: 'skill_ranged', description: '+Ranged Skill' },
+  // Defense
+  { id: 'eluding', name: 'Eluding', effectType: 'dodge_rating', description: '+Dodge Rating' },
+  // Resistances
+  { id: 'blinding', name: 'Blinding', effectType: 'resist_holy', description: '+Resist Holy' },
+  { id: 'blazing', name: 'Blazing', effectType: 'resist_fire', description: '+Resist Fire' },
+  { id: 'frozen', name: 'Frozen', effectType: 'resist_frost', description: '+Resist Frost' },
+  { id: 'chaotic', name: 'Chaotic', effectType: 'resist_shadow', description: '+Resist Shadow' },
+  // Weapon Skills
+  { id: 'puncturing', name: 'Puncturing', effectType: 'skill_daggers', description: '+Daggers Skill' },
   { id: 'mauling', name: 'Mauling', effectType: 'skill_maces', description: '+Maces Skill' },
-  { id: 'fortifying', name: 'Fortifying', effectType: 'armor_value', description: '+Armor Value' },
-  { id: 'blazing', name: 'Blazing', effectType: 'resist_fire', description: '+Fire Resist' },
-  { id: 'frozen', name: 'Frozen', effectType: 'resist_cold', description: '+Cold Resist' },
-  { id: 'savage', name: 'Savage', effectType: 'crit_melee', description: '+Melee Crit' },
-  { id: 'stalwart', name: 'Stalwart', effectType: 'block_chance', description: '+Block Chance' },
-  { id: 'evasive', name: 'Evasive', effectType: 'dodge_chance', description: '+Dodge Chance' },
 ];
 
 // Full item structure for listings

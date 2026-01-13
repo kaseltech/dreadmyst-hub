@@ -31,7 +31,9 @@ export default function NewBuildPage() {
   const [secondaryStats, setSecondaryStats] = useState({
     health: 0,
     mana: 0,
-    stamina: 0,
+    armorValue: 0,
+    regeneration: 0,
+    meditate: 0,
   });
   const [abilities, setAbilities] = useState<BuildAbilities>({});
 
@@ -62,7 +64,7 @@ export default function NewBuildPage() {
       tags: selectedTags,
       upvotes: 0,
       base_stats: baseStats,
-      secondary_stats: secondaryStats.health || secondaryStats.mana || secondaryStats.stamina ? secondaryStats : null,
+      secondary_stats: Object.values(secondaryStats).some(v => v > 0) ? secondaryStats : null,
       abilities: Object.keys(abilities).length > 0 ? abilities : null,
     });
 
@@ -231,7 +233,7 @@ export default function NewBuildPage() {
             {/* Secondary Stats (Optional) */}
             <div className="mt-6 pt-6 border-t border-card-border">
               <h3 className="text-sm font-medium text-muted mb-3">Secondary Stats (Optional)</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 {SECONDARY_STATS.map((stat) => (
                   <div key={stat.id}>
                     <label className={`block text-xs font-medium mb-1 ${stat.color}`}>
