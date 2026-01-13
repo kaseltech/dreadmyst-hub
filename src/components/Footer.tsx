@@ -1,6 +1,12 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
+import ChangelogModal from './changelog/ChangelogModal';
 
 export default function Footer() {
+  const [changelogOpen, setChangelogOpen] = useState(false);
+
   return (
     <footer className="border-t border-card-border bg-card-bg mt-auto">
       <div className="container mx-auto px-4 py-8">
@@ -18,6 +24,7 @@ export default function Footer() {
               <li><Link href="/wiki" className="hover:text-foreground transition-colors">Wiki</Link></li>
               <li><Link href="/builds" className="hover:text-foreground transition-colors">Character Builds</Link></li>
               <li><Link href="/discuss" className="hover:text-foreground transition-colors">Discussions</Link></li>
+              <li><Link href="/market" className="hover:text-foreground transition-colors">Marketplace</Link></li>
             </ul>
           </div>
 
@@ -26,7 +33,14 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-muted">
               <li><a href="#" className="hover:text-foreground transition-colors">Discord</a></li>
               <li><a href="#" className="hover:text-foreground transition-colors">Reddit</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Steam Community</a></li>
+              <li>
+                <button
+                  onClick={() => setChangelogOpen(true)}
+                  className="hover:text-foreground transition-colors"
+                >
+                  What&apos;s New
+                </button>
+              </li>
             </ul>
           </div>
         </div>
@@ -35,6 +49,8 @@ export default function Footer() {
           <p>Dreadmyst Nexus is a fan-made community resource. Not affiliated with the game developers.</p>
         </div>
       </div>
+
+      <ChangelogModal isOpen={changelogOpen} onClose={() => setChangelogOpen(false)} />
     </footer>
   );
 }

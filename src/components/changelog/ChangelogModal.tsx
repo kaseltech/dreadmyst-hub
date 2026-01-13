@@ -15,6 +15,26 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: '0.5.0',
+    date: 'January 12, 2026',
+    title: 'Rebrand & Build System',
+    changes: [
+      { type: 'new', text: 'Rebranded to Dreadmyst Nexus with new orange/black theme' },
+      { type: 'new', text: 'New logo with portal icon in header' },
+      { type: 'new', text: 'Character build system with class-specific abilities' },
+      { type: 'new', text: 'Cleric class with all 14 abilities (Paladin, Mage, Ranger coming soon)' },
+      { type: 'new', text: 'Base stats input (STR, AGI, INT, WIL, CRG) for builds' },
+      { type: 'new', text: 'Ability level selectors (0-5) for each class ability' },
+      { type: 'new', text: 'Admin panel for user management and moderation' },
+      { type: 'new', text: 'Discussion/reply deletion for authors and admins' },
+      { type: 'improved', text: 'Polished UI - refined header, hero section, cards, and buttons' },
+      { type: 'improved', text: 'Better typography with improved line-height and letter-spacing' },
+      { type: 'improved', text: 'Card hover effects with lift and shadow' },
+      { type: 'fixed', text: 'Gold formatting now truncates instead of rounding (1.25M stays 1.25M)' },
+      { type: 'fixed', text: 'Marketplace card alignment issues' },
+    ],
+  },
+  {
     version: '0.4.0',
     date: 'January 12, 2026',
     title: 'Marketplace UX Improvements',

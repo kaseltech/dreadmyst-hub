@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dreadmyst Nexus
+
+A community-driven hub for Dreadmyst Online. Discover builds, explore guides, and trade with fellow adventurers.
+
+**Live Site:** [dreadmyst-nexus.com](https://dreadmyst-nexus.com)
+
+## Features
+
+### Wiki
+- Game mechanics and guides
+- Class information (Paladin, Mage, Ranger, Cleric)
+- Items, quests, and locations
+
+### Character Builds
+- Submit and browse community builds
+- Class-specific ability selectors with levels (0-5)
+- Base stats (STR, AGI, INT, WIL, CRG)
+- Secondary stats (Health, Mana, Stamina)
+- Upvoting system
+
+### Marketplace
+- Buy and sell items with other players
+- Item tier system (Godly, Holy, Blessed)
+- Real-time messaging between buyers and sellers
+- Whisper command generator for in-game contact
+- Gold formatting with K/M shortcuts
+
+### Discussions
+- Community forums for questions and tips
+- Author and admin moderation
+
+### User Features
+- Discord authentication
+- In-app messaging with chat widget
+- Admin panel for moderation
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Database:** Supabase (PostgreSQL)
+- **Auth:** Supabase Auth with Discord OAuth
+- **Styling:** Tailwind CSS
+- **Deployment:** Vercel
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the site.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env.local` file with:
 
-## Learn More
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Database Migrations
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+SQL migrations are in `/supabase/migrations/`. Run them in order on your Supabase project.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Version History
 
-## Deploy on Vercel
+See the in-app changelog ("What's New" in footer) for detailed release notes.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### v0.5.0 - Rebrand & Build System
+- Rebranded to Dreadmyst Nexus
+- Character build system with class abilities
+- Admin panel and moderation
+- UI polish and refinements
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### v0.4.0 - Marketplace UX
+- Edit listings, stats display, dynamic stat picker
+- Equipment vs Materials toggle
+- IGN display in chat
+
+### v0.3.0 - Chat & Items
+- Floating chat widget
+- Item tier system
+- Gold formatting
+- Keyboard shortcuts
+
+### v0.2.0 - Marketplace & Messaging
+- Full marketplace
+- In-app messaging
+- Discord auth
+
+### v0.1.0 - Initial Launch
+- Wiki, builds, discussions
+- Dark fantasy theme
+
+## Contributing
+
+This is a fan-made community resource. Contributions welcome!
+
+## License
+
+MIT
