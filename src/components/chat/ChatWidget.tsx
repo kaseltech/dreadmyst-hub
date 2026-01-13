@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { supabase, Conversation, Message, Profile } from '@/lib/supabase';
+import { supabase, createRealtimeClient, Conversation, Message, Profile } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { formatTimeAgo } from '@/lib/formatters';
 

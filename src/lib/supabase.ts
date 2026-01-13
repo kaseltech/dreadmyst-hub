@@ -4,7 +4,26 @@ import { createBrowserClient } from '@supabase/ssr';
 const supabaseUrl = 'https://vnafrwxtxadddpbnfdgr.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuYWZyd3h0eGFkZGRwYm5mZGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNjAzMjQsImV4cCI6MjA4MzgzNjMyNH0.fAbkswHI8ex_AxQI7zoIZfR82OCChrMjJDQoadDnaTg';
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+// Create client with realtime disabled for regular queries
+// This prevents connection pooling issues on page refresh
+let _supabase: ReturnType<typeof createBrowserClient> | null = null;
+
+export const supabase = (() => {
+  if (typeof window === 'undefined') {
+    // Server-side: create new client each time
+    return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  }
+  // Client-side: reuse singleton
+  if (!_supabase) {
+    _supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+  }
+  return _supabase;
+})();
+
+// For realtime subscriptions (chat), create dedicated client
+export function createRealtimeClient() {
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+}
 
 // Types for our database tables
 export interface BuildStats {

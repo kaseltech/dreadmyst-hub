@@ -114,8 +114,9 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     e.preventDefault();
     if (!user || !build || !selectedClass) return;
 
-    // Check permission
-    if (build.author_id !== user.id) {
+    // Check permission - author or admin can edit
+    const canEditBuild = build.author_id === user.id || profile?.is_admin;
+    if (!canEditBuild) {
       alert('You do not have permission to edit this build.');
       return;
     }
@@ -224,8 +225,9 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  // Check permission
-  if (build.author_id !== user.id) {
+  // Check permission - author or admin can edit
+  const canEdit = build.author_id === user.id || profile?.is_admin;
+  if (!canEdit) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-4">Access Denied</h1>

@@ -26,7 +26,8 @@ export default function BuildPage({ params }: { params: Promise<{ id: string }> 
   const [deleting, setDeleting] = useState(false);
 
   // Check if current user can edit/delete this build
-  const canEdit = build && user && build.author_id === user.id;
+  // Admins can edit/delete any build, authors can edit/delete their own
+  const canEdit = build && user && (build.author_id === user.id || profile?.is_admin);
   const canDelete = build && user && (build.author_id === user.id || profile?.is_admin);
 
   useEffect(() => {
