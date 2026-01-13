@@ -98,7 +98,6 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
     { id: '2', stat: 'agility', value: 0 },
     { id: '3', stat: 'intelligence', value: 0 },
   ]);
-  const [equipEffects, setEquipEffects] = useState('');
 
   // Non-equipment (materials, etc.)
   const [quantity, setQuantity] = useState(1);
@@ -121,7 +120,6 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
         { id: '2', stat: 'agility', value: 0 },
         { id: '3', stat: 'intelligence', value: 0 },
       ]);
-      setEquipEffects('');
       setQuantity(1);
       setScrollTier('');
       setIsEquipment(true);
@@ -224,7 +222,6 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
       listingData.socket_count = socketCount;
       listingData.level_requirement = levelRequirement;
       listingData.stats = Object.keys(statsObj).length > 0 ? statsObj : null;
-      listingData.equip_effects = equipEffects ? equipEffects.split('\n').filter(e => e.trim()) : null;
       if (equipmentSubtype) {
         listingData.equipment_subtype = equipmentSubtype;
       }
@@ -398,18 +395,6 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
               </div>
             </div>
 
-            {/* Equip Effects */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Equip Effects</label>
-              <textarea
-                rows={2}
-                placeholder={"+10% Melee Damage\n+5 Fire Resistance"}
-                value={equipEffects}
-                onChange={(e) => setEquipEffects(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
-                style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
-              />
-            </div>
           </div>
         )}
 

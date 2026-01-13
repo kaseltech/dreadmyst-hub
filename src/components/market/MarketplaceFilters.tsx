@@ -14,6 +14,25 @@ const ALL_STATS = (Object.entries(STAT_CONFIG) as [ItemStatType, typeof STAT_CON
     category: info.category,
   }));
 
+// Stat groups for filter display
+const STAT_GROUPS = [
+  {
+    label: 'Primary',
+    categories: ['primary'] as const,
+    stats: ALL_STATS.filter(s => s.category === 'primary'),
+  },
+  {
+    label: 'Resists',
+    categories: ['resist'] as const,
+    stats: ALL_STATS.filter(s => s.category === 'resist'),
+  },
+  {
+    label: 'Bonuses',
+    categories: ['secondary', 'regen', 'combat', 'defense'] as const,
+    stats: ALL_STATS.filter(s => ['secondary', 'regen', 'combat', 'defense'].includes(s.category)),
+  },
+];
+
 const categories: { value: ItemCategory | 'all'; label: string; icon: string }[] = [
   { value: 'all', label: 'All', icon: '🎒' },
   { value: 'weapons', label: 'Weapons', icon: '⚔️' },
@@ -259,31 +278,37 @@ export default function MarketplaceFilters({
       {/* Advanced Filters Panel */}
       {showAdvanced && (
         <div className="space-y-4 pt-2 border-t border-card-border animate-in slide-in-from-top-2 duration-200">
-          {/* Stat Filters */}
-          <div>
-            <label className="block text-xs font-medium text-muted mb-2 uppercase tracking-wider">
+          {/* Stat Filters - Grouped */}
+          <div className="space-y-3">
+            <label className="block text-xs font-medium text-muted uppercase tracking-wider">
               Has Stats
               {filters.stats.length > 0 && <span className="ml-1 text-accent">({filters.stats.length})</span>}
             </label>
-            <div className="flex flex-wrap gap-2">
-              {ALL_STATS.map((stat) => (
-                <button
-                  key={stat.id}
-                  onClick={() => toggleStat(stat.id)}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 ${
-                    filters.stats.includes(stat.id)
-                      ? `bg-opacity-30 ring-2 ring-current ${stat.color}`
-                      : 'bg-card-border text-muted hover:text-foreground'
-                  }`}
-                  style={filters.stats.includes(stat.id) ? { backgroundColor: 'rgba(255,255,255,0.1)' } : {}}
-                >
-                  <span className={`font-bold ${filters.stats.includes(stat.id) ? stat.color : ''}`}>
-                    {stat.abbrev}
-                  </span>
-                  <span className="hidden sm:inline">{stat.label}</span>
-                </button>
-              ))}
-            </div>
+
+            {STAT_GROUPS.map((group) => (
+              <div key={group.label}>
+                <span className="text-[10px] font-semibold text-muted/60 uppercase tracking-wider">{group.label}</span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {group.stats.map((stat) => (
+                    <button
+                      key={stat.id}
+                      onClick={() => toggleStat(stat.id)}
+                      className={`px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1 ${
+                        filters.stats.includes(stat.id)
+                          ? `ring-1 ring-current ${stat.color}`
+                          : 'bg-card-border/50 text-muted hover:text-foreground'
+                      }`}
+                      style={filters.stats.includes(stat.id) ? { backgroundColor: 'rgba(255,255,255,0.08)' } : {}}
+                    >
+                      <span className={`font-bold ${filters.stats.includes(stat.id) ? stat.color : ''}`}>
+                        {stat.abbrev}
+                      </span>
+                      <span className="hidden lg:inline">{stat.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Socket Filter */}
