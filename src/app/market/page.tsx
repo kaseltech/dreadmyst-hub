@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { supabase, Listing } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useHotkeys } from '@/hooks/useHotkeys';
-import { formatGoldShort, formatTimeAgo } from '@/lib/formatters';
-import { ItemTier, TIER_CONFIG, getTierColorClass, STAT_CONFIG, PrimaryStat } from '@/types/items';
+import { ItemTier } from '@/types/items';
 import MarketplaceFilters, { FilterState, defaultFilters } from '@/components/market/MarketplaceFilters';
+import ListingCard from '@/components/market/ListingCard';
 
 export default function MarketPage() {
   const router = useRouter();
@@ -189,81 +189,9 @@ export default function MarketPage() {
         {/* Listings Grid */}
         {!loading && filteredListings.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredListings.map((listing) => {
-              const listingTier = (listing.tier as ItemTier) || 'none';
-              return (
-                <Link
-                  key={listing.id}
-                  href={`/market/${listing.id}`}
-                  className="group block p-4 rounded-xl border border-card-border bg-card-bg hover:border-accent/50 hover:shadow-lg hover:shadow-accent/5 transition-all"
-                >
-                  {/* Header row */}
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {listingTier !== 'none' && (
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${TIER_CONFIG[listingTier].bgColor} ${TIER_CONFIG[listingTier].color}`}>
-                          {TIER_CONFIG[listingTier].label}
-                        </span>
-                      )}
-                      <span className="px-2 py-0.5 text-xs font-medium rounded bg-card-border text-muted capitalize">
-                        {listing.category}
-                      </span>
-                    </div>
-                    <span className="text-xs text-muted">{formatTimeAgo(listing.created_at)}</span>
-                  </div>
-
-                  {/* Item name */}
-                  <h3 className={`text-lg font-semibold mb-2 group-hover:text-accent-light transition-colors ${getTierColorClass(listingTier)}`}>
-                    {listing.item_name}
-                  </h3>
-
-                  {/* Stats display */}
-                  {listing.stats && Object.keys(listing.stats).length > 0 && (
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2">
-                      {Object.entries(listing.stats).map(([stat, value]) => {
-                        const config = STAT_CONFIG[stat as PrimaryStat];
-                        return (
-                          <span key={stat} className={`text-xs font-medium ${config?.color || 'text-muted'}`}>
-                            +{value} {config?.abbrev || stat.slice(0, 3).toUpperCase()}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Socket & Level row */}
-                  <div className="flex items-center gap-3 mb-3">
-                    {/* Socket indicators */}
-                    {listing.socket_count > 0 && (
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: listing.socket_count }).map((_, i) => (
-                          <div key={i} className="w-2.5 h-2.5 rounded-full border border-accent/60 bg-accent/20" />
-                        ))}
-                        {Array.from({ length: 3 - listing.socket_count }).map((_, i) => (
-                          <div key={`empty-${i}`} className="w-2.5 h-2.5 rounded-full border border-card-border bg-card-border/20" />
-                        ))}
-                      </div>
-                    )}
-                    {/* Level requirement */}
-                    {listing.level_requirement && listing.level_requirement > 1 && (
-                      <span className="text-xs text-muted">
-                        Lvl {listing.level_requirement}+
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-3 border-t border-card-border">
-                    <span className="text-lg font-bold text-yellow-500">
-                      {formatGoldShort(listing.price)} Gold
-                    </span>
-                    <span className="text-xs text-muted truncate max-w-[120px]">
-                      {listing.seller?.username || 'Unknown'}
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+            {filteredListings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
           </div>
         )}
 
