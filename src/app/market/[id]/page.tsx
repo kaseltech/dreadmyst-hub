@@ -55,7 +55,7 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
   }
 
   async function handleContact() {
-    if (!user || !listing) return;
+    if (!user || !listing || !seller) return;
 
     setContacting(true);
 
@@ -67,29 +67,27 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
       .eq('buyer_id', user.id)
       .single();
 
-    if (existingConvo) {
-      router.push(`/messages/${existingConvo.id}`);
-      return;
+    if (!existingConvo) {
+      // Create new conversation
+      const { error } = await supabase
+        .from('conversations')
+        .insert({
+          listing_id: listing.id,
+          buyer_id: user.id,
+          seller_id: listing.seller_id,
+        });
+
+      if (error) {
+        console.error('Error creating conversation:', error);
+        alert('Error starting conversation. Please try again.');
+        setContacting(false);
+        return;
+      }
     }
 
-    // Create new conversation
-    const { data: newConvo, error } = await supabase
-      .from('conversations')
-      .insert({
-        listing_id: listing.id,
-        buyer_id: user.id,
-        seller_id: listing.seller_id,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating conversation:', error);
-      alert('Error starting conversation. Please try again.');
-      setContacting(false);
-    } else {
-      router.push(`/messages/${newConvo.id}`);
-    }
+    // Open chat widget and set active user to seller
+    window.dispatchEvent(new CustomEvent('openChatWithUser', { detail: { userId: seller.id } }));
+    setContacting(false);
   }
 
   async function handleMarkSold() {

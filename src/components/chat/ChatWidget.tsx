@@ -88,11 +88,23 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     }
   }, []);
 
-  // Listen for open event from messages page
+  // Listen for open events
   useEffect(() => {
     const handleOpenChat = () => setMode('open');
+    const handleOpenChatWithUser = (e: CustomEvent<{ userId: string }>) => {
+      setMode('open');
+      // Set active user after a short delay to allow conversations to load
+      setTimeout(() => {
+        setActiveUserId(e.detail.userId);
+      }, 100);
+    };
+
     window.addEventListener('openChatWidget', handleOpenChat);
-    return () => window.removeEventListener('openChatWidget', handleOpenChat);
+    window.addEventListener('openChatWithUser', handleOpenChatWithUser as EventListener);
+    return () => {
+      window.removeEventListener('openChatWidget', handleOpenChat);
+      window.removeEventListener('openChatWithUser', handleOpenChatWithUser as EventListener);
+    };
   }, []);
 
   // Save preferences
