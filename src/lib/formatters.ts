@@ -62,7 +62,12 @@ export function formatTimeAgo(dateString: string): string {
 
 /**
  * Generate whisper command for contacting seller
+ * Format: /w CharacterName WTB 'Item Name' for 50K
  */
-export function generateWhisperCommand(characterName: string, itemName: string): string {
-  return `/w ${characterName} I'd like to buy your "${itemName}"`;
+export function generateWhisperCommand(characterName: string, itemName: string, price?: number): string {
+  let command = `/w ${characterName} WTB '${itemName}'`;
+  if (price) {
+    command += ` for ${formatGoldShort(price)}`;
+  }
+  return command;
 }

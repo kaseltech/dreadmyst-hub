@@ -79,6 +79,15 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       console.error('Error fetching messages:', error);
     } else {
       setMessages(data || []);
+
+      // Mark messages as read (messages not from current user)
+      if (user) {
+        await supabase
+          .from('messages')
+          .update({ read: true })
+          .eq('conversation_id', id)
+          .neq('sender_id', user.id);
+      }
     }
     setLoading(false);
   }

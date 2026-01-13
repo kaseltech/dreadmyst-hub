@@ -38,26 +38,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     }
   }, [user]);
 
-  // Fetch messages for active conversation
-  const fetchMessages = useCallback(async (conversationId: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*, sender:profiles(*)')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (!error && data) {
-      setMessages(data);
-      // Mark messages as read
-      await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', user?.id);
-    }
-  }, [user]);
-
-  // Fetch unread count
+  // Fetch unread count (defined before fetchMessages since it's used there)
   const fetchUnreadCount = useCallback(async () => {
     if (!user) return;
 
@@ -88,6 +69,30 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       onUnreadCountChange?.(count || 0);
     }
   }, [user, onUnreadCountChange]);
+
+  // Fetch messages for active conversation
+  const fetchMessages = useCallback(async (conversationId: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*, sender:profiles(*)')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+
+    if (!error && data) {
+      setMessages(data);
+      // Mark messages as read
+      const { error: updateError } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user?.id);
+
+      if (!updateError) {
+        // Refresh unread count after marking as read
+        fetchUnreadCount();
+      }
+    }
+  }, [user, fetchUnreadCount]);
 
   // Subscribe to new messages globally
   useEffect(() => {
@@ -210,7 +215,10 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       content: newMessage.trim(),
     });
 
-    if (!error) {
+    if (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
+    } else {
       setNewMessage('');
       await supabase
         .from('conversations')
