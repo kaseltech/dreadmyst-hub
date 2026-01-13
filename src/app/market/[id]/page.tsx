@@ -8,6 +8,7 @@ import { useAuth } from '@/components/AuthProvider';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { formatGold, generateWhisperCommand } from '@/lib/formatters';
 import { TIER_CONFIG, ItemTier, getTierColorClass, BASE_TYPES, SUFFIX_ANIMALS, SUFFIX_MODIFIERS, STAT_CONFIG, PrimaryStat } from '@/types/items';
+import ItemTooltip from '@/components/market/ItemTooltip';
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -197,54 +198,21 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
             </div>
           </div>
 
-          {/* Item Stats Section */}
-          {(listing.socket_count > 0 || (listing.stats && Object.keys(listing.stats).length > 0) || (listing.equip_effects && listing.equip_effects.length > 0)) && (
-            <div className="mb-6 p-4 rounded-lg bg-background border border-card-border">
-              <h2 className="text-sm font-semibold text-muted mb-3">Item Properties</h2>
-
-              {/* Sockets */}
-              {listing.socket_count > 0 && (
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-sm text-muted">Sockets:</span>
-                  <div className="flex gap-1">
-                    {Array.from({ length: listing.socket_count }).map((_, i) => (
-                      <div key={i} className="w-5 h-5 rounded-full border-2 border-accent/50 bg-accent/20" />
-                    ))}
-                  </div>
-                  <span className="text-sm text-muted">({listing.socket_count} empty)</span>
-                </div>
-              )}
-
-              {/* Stats */}
-              {listing.stats && Object.keys(listing.stats).length > 0 && (
-                <div className="mb-3">
-                  <p className="text-sm text-muted mb-2">Stats:</p>
-                  <div className="flex flex-wrap gap-3">
-                    {Object.entries(listing.stats).map(([stat, value]) => {
-                      const statConfig = STAT_CONFIG[stat as PrimaryStat];
-                      return (
-                        <span key={stat} className={`text-sm font-medium ${statConfig?.color || 'text-foreground'}`}>
-                          +{value} {statConfig?.label || stat}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Equip Effects */}
-              {listing.equip_effects && listing.equip_effects.length > 0 && (
-                <div>
-                  <p className="text-sm text-muted mb-2">Equip Effects:</p>
-                  <ul className="space-y-1">
-                    {listing.equip_effects.map((effect, i) => (
-                      <li key={i} className="text-sm text-green-400">{effect}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Game-style Item Tooltip */}
+          <div className="flex justify-center mb-6">
+            <ItemTooltip
+              itemName={listing.item_name}
+              tier={(listing.tier as ItemTier) || 'none'}
+              baseTypeId={listing.base_type_id}
+              suffixAnimalId={listing.suffix_animal_id}
+              suffixModifierId={listing.suffix_modifier_id}
+              socketCount={listing.socket_count || 0}
+              levelRequirement={listing.level_requirement || 1}
+              stats={listing.stats}
+              equipEffects={listing.equip_effects}
+              price={listing.price}
+            />
+          </div>
 
           {/* Description */}
           {listing.item_description && (

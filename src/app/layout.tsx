@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cinzel } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,6 +16,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const cinzel = Cinzel({
+  variable: "--font-cinzel",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Dreadmyst Hub - Community Wiki, Builds & Marketplace",
   description: "Your community resource for Dreadmyst Online. Find character builds, game guides, wiki info, trade items, and join discussions with fellow players.",
@@ -30,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} antialiased min-h-screen flex flex-col`}
       >
         <AuthProvider>
           <Header />
