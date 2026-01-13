@@ -32,24 +32,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session ? 'exists' : 'none');
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        console.log('User ID:', session.user.id);
         fetchProfile(session.user.id);
       } else {
         setLoading(false);
       }
-    }).catch(err => {
-      console.error('Error getting session:', err);
+    }).catch(() => {
       setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session ? 'has session' : 'no session');
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -65,9 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function fetchProfile(userId: string) {
-    console.log('fetchProfile called with userId:', userId);
     try {
-      // Try direct fetch to bypass potential supabase client issues
+      // Direct fetch to Supabase REST API (more reliable than client library)
       const response = await fetch(
         `https://vnafrwxtxadddpbnfdgr.supabase.co/rest/v1/profiles?id=eq.${userId}&select=*`,
         {
@@ -78,12 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       );
       const profiles = await response.json();
-      console.log('Direct fetch result:', profiles);
-
       const data = profiles[0] || null;
       const error = profiles.length === 0 ? { message: 'No profile found' } : null;
-
-      console.log('Profile fetch result:', { data, error });
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -122,7 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
-        console.log('Setting profile from DB:', data);
         setProfile(data);
       }
     } catch (err) {
