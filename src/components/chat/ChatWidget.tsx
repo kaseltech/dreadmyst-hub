@@ -564,7 +564,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
-        async (payload) => {
+        async (payload: { new: Record<string, unknown> }) => {
           const newMsg = payload.new as Message;
           console.log('[Chat] New message received via realtime:', newMsg.id);
 
