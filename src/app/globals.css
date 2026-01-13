@@ -54,14 +54,16 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Card hover effects */
 .card-hover {
-  padding: 28px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 26px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  transform: translateY(-3px);
+  border-color: rgba(245, 158, 11, 0.20);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 

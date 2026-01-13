@@ -77,17 +77,20 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-card-border bg-card-bg/95 backdrop-blur">
       <div className="container mx-auto px-4">
         <div className="flex h-14 items-center justify-between">
-          {/* Logo - Portal icon only */}
-          <Link href="/" className="flex items-center overflow-hidden h-10 w-10">
+          {/* Logo - Portal icon */}
+          <Link
+            href="/"
+            className="flex items-center justify-center w-8 h-8 rounded-[10px] overflow-hidden hover:bg-amber-500/[0.06] transition-all duration-200 group"
+          >
             <img
               src="/portal.png"
               alt="Dreadmyst Nexus"
-              className="h-24 w-auto -my-4 hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.4)] transition-all duration-200"
+              className="h-16 w-auto group-hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.35)]"
             />
           </Link>
 
           {/* Navigation - centered */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/' && pathname.startsWith(item.href));
@@ -96,15 +99,16 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative pb-1.5 text-[0.9rem] tracking-[0.04em] transition-colors duration-200 ${
+                  className={`relative px-3 py-2.5 text-[14px] font-medium tracking-[0.05em] transition-colors duration-200 ${
                     isActive
                       ? 'text-amber-500'
-                      : 'text-white/65 hover:text-white/90'
+                      : 'text-white/70 hover:text-white/90'
                   }`}
+                  style={{ fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif' }}
                 >
                   {item.label}
                   {isActive && (
-                    <span className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-amber-500 rounded-sm" />
+                    <span className="absolute bottom-1 left-3 right-3 h-0.5 bg-amber-500 rounded-sm opacity-90" />
                   )}
                 </Link>
               );
