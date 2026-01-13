@@ -9,6 +9,8 @@ import { ItemTier, TIER_CONFIG } from '@/types/items';
 import StatPicker from '@/components/market/StatPicker';
 import SocketSelector from '@/components/market/SocketSelector';
 import Modal from '@/components/ui/Modal';
+import ItemAutocomplete from '@/components/market/ItemAutocomplete';
+import { Affix, STAT_DISPLAY_NAMES } from '@/lib/game-data-types';
 
 interface StatEntry {
   id: string;
@@ -130,6 +132,55 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
   useEffect(() => {
     setEquipmentSubtype('');
   }, [category]);
+
+  // Map game data stat names to our stat picker format
+  const statNameMap: Record<string, string> = {
+    Strength: 'strength',
+    Agility: 'agility',
+    Intelligence: 'intelligence',
+    Willpower: 'willpower',
+    Courage: 'courage',
+    Health: 'health',
+    Mana: 'mana',
+    ArmorValue: 'armor',
+    Regeneration: 'regeneration',
+    Meditate: 'meditate',
+    WeaponValue: 'weapon_value',
+    RangedWeaponValue: 'ranged_value',
+    MeleeCritical: 'melee_crit',
+    RangedCritical: 'ranged_crit',
+    SpellCritical: 'spell_crit',
+    DodgeRating: 'dodge',
+    BlockRating: 'block',
+    ResistFrost: 'frost_resist',
+    ResistFire: 'fire_resist',
+    ResistShadow: 'shadow_resist',
+    ResistHoly: 'holy_resist',
+  };
+
+  // Handle affix selection - auto-fill stats
+  const handleAffixSelect = (affix: Affix | null) => {
+    if (!affix) return;
+
+    // Convert affix stats to our format
+    const newStats: StatEntry[] = affix.stats.map((s, index) => ({
+      id: String(index + 1),
+      stat: statNameMap[s.stat] || s.stat.toLowerCase(),
+      value: Math.round(s.value),
+    }));
+
+    // Pad to at least 3 stats
+    while (newStats.length < 3) {
+      newStats.push({ id: String(newStats.length + 1), stat: '', value: 0 });
+    }
+
+    setStats(newStats);
+
+    // Auto-set level requirement based on affix level range
+    if (affix.min_level > 1) {
+      setLevelRequirement(affix.min_level);
+    }
+  };
 
   // Reset category when switching modes
   useEffect(() => {
@@ -332,15 +383,27 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
           {/* Item Name */}
           <div>
             <label className="block text-sm font-medium mb-2">Item Name *</label>
-            <input
-              type="text"
-              required
-              placeholder={isEquipment ? 'e.g., Godly Breastplate of the Lion' : 'e.g., Keys to the Barracks'}
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-              style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
-            />
+            {isEquipment ? (
+              <>
+                <ItemAutocomplete
+                  value={itemName}
+                  onChange={setItemName}
+                  onAffixSelect={handleAffixSelect}
+                  placeholder="Start typing affix or item name..."
+                />
+                <p className="text-xs text-muted mt-1">Type to search affixes - stats auto-fill when selected</p>
+              </>
+            ) : (
+              <input
+                type="text"
+                required
+                placeholder="e.g., Keys to the Barracks"
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg placeholder:text-muted/50 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                style={{ background: '#1a1a24', border: '1px solid rgba(255,255,255,0.12)', color: '#e5e5e5' }}
+              />
+            )}
           </div>
         </div>
 
