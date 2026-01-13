@@ -76,13 +76,13 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-card-border bg-card-bg/95 backdrop-blur">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 sm:h-20 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <img
               src="/logo.png"
               alt="Dreadmyst Nexus"
-              className="h-9 sm:h-11 w-auto"
+              className="h-12 sm:h-14 md:h-16 w-auto"
             />
           </Link>
 
