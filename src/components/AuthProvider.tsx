@@ -65,12 +65,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function fetchProfile(userId: string) {
+    console.log('fetchProfile called with userId:', userId);
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
+
+      console.log('Profile fetch result:', { data, error });
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -109,6 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
+        console.log('Setting profile from DB:', data);
         setProfile(data);
       }
     } catch (err) {
