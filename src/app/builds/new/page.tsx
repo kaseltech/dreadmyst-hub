@@ -3,42 +3,67 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase, BuildStats, BuildAbilities } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { CLASS_DATA, ClassName, BASE_STATS, SECONDARY_STATS } from '@/lib/class-data';
 
-const classes = ['Warrior', 'Mage', 'Rogue', 'Healer'];
-const tagOptions = ['PvE', 'PvP', 'DPS', 'Tank', 'Healer', 'Support', 'Solo', 'Raid', 'Beginner-Friendly', 'Endgame', 'AoE', 'Speed'];
+const tagOptions = ['PvE', 'PvP', 'DPS', 'Tank', 'Healer', 'Support', 'Solo', 'Group', 'Beginner-Friendly', 'Endgame', 'AoE', 'Speed'];
 
 export default function NewBuildPage() {
   const router = useRouter();
   const { user, profile, loading: authLoading, signInWithDiscord } = useAuth();
   const [submitting, setSubmitting] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<ClassName | ''>('');
   const [formData, setFormData] = useState({
     title: '',
-    class_name: '',
     description: '',
-    skills: '',
     equipment: '',
     playstyle: '',
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [baseStats, setBaseStats] = useState<BuildStats>({
+    strength: 5,
+    agility: 5,
+    intelligence: 5,
+    willpower: 5,
+    courage: 5,
+  });
+  const [secondaryStats, setSecondaryStats] = useState({
+    health: 0,
+    mana: 0,
+    stamina: 0,
+  });
+  const [abilities, setAbilities] = useState<BuildAbilities>({});
+
+  const classData = selectedClass ? CLASS_DATA[selectedClass] : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !profile) return;
+    if (!user || !profile || !selectedClass) return;
 
     setSubmitting(true);
 
+    // Generate skills text from abilities for backward compatibility
+    const skillsText = classData
+      ? classData.abilities
+          .filter(a => abilities[a.id] && abilities[a.id] > 0)
+          .map(a => `${a.name} (Level ${abilities[a.id]})`)
+          .join('\n')
+      : '';
+
     const { error } = await supabase.from('builds').insert({
       title: formData.title,
-      class_name: formData.class_name,
+      class_name: selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1),
       description: formData.description,
-      skills: formData.skills || null,
+      skills: skillsText || null,
       equipment: formData.equipment || null,
       playstyle: formData.playstyle || null,
       author_name: profile.username,
       tags: selectedTags,
       upvotes: 0,
+      base_stats: baseStats,
+      secondary_stats: secondaryStats.health || secondaryStats.mana || secondaryStats.stamina ? secondaryStats : null,
+      abilities: Object.keys(abilities).length > 0 ? abilities : null,
     });
 
     if (error) {
@@ -54,6 +79,18 @@ export default function NewBuildPage() {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
+  };
+
+  const handleClassChange = (className: ClassName | '') => {
+    setSelectedClass(className);
+    setAbilities({}); // Reset abilities when class changes
+  };
+
+  const handleAbilityChange = (abilityId: string, level: number) => {
+    setAbilities(prev => ({
+      ...prev,
+      [abilityId]: level,
+    }));
   };
 
   if (authLoading) {
@@ -86,114 +123,225 @@ export default function NewBuildPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <nav className="text-sm text-muted mb-6">
           <Link href="/builds" className="hover:text-foreground transition-colors">Builds</Link>
           <span className="mx-2">/</span>
           <span className="text-foreground">Submit New Build</span>
         </nav>
 
-        <h1 className="text-4xl font-bold mb-8">Submit Your Build</h1>
+        <h1 className="text-4xl font-bold mb-2">Submit Your Build</h1>
+        <p className="text-muted mb-8">Share your character build with the community</p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Build Title *</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g., Shadow Assassin - Max Crit DPS"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Section 1: Basic Info */}
+          <div className="p-6 rounded-xl border border-card-border bg-card-bg">
+            <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
 
-          {/* Class */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Class *</label>
-            <select
-              required
-              value={formData.class_name}
-              onChange={(e) => setFormData({ ...formData, class_name: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground focus:outline-none focus:border-accent"
-            >
-              <option value="">Select a class</option>
-              {classes.map((cls) => (
-                <option key={cls} value={cls}>{cls}</option>
-              ))}
-            </select>
-          </div>
+            {/* Title */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Build Title *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g., Holy Healer - Group Support Build"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+              />
+            </div>
 
-          {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Tags</label>
-            <div className="flex flex-wrap gap-2">
-              {tagOptions.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTag(tag)}
-                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                    selectedTags.includes(tag)
-                      ? 'bg-accent text-white'
-                      : 'bg-card-border text-muted hover:text-foreground'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
+            {/* Class Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Class *</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {Object.values(CLASS_DATA).map((cls) => (
+                  <button
+                    key={cls.id}
+                    type="button"
+                    onClick={() => handleClassChange(cls.id)}
+                    className={`p-4 rounded-lg border-2 transition-all text-center ${
+                      selectedClass === cls.id
+                        ? 'border-accent bg-accent/10'
+                        : 'border-card-border bg-background hover:border-muted'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">
+                      {cls.id === 'paladin' && '🛡️'}
+                      {cls.id === 'mage' && '🔮'}
+                      {cls.id === 'ranger' && '🏹'}
+                      {cls.id === 'cleric' && '✨'}
+                    </div>
+                    <div className="font-semibold">{cls.name}</div>
+                    <div className="text-xs text-muted mt-1">{cls.weapons.join(', ')}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Tags</label>
+              <div className="flex flex-wrap gap-2">
+                {tagOptions.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
+                      selectedTags.includes(tag)
+                        ? 'bg-accent text-white'
+                        : 'bg-card-border text-muted hover:text-foreground'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Description *</label>
-            <textarea
-              required
-              rows={3}
-              placeholder="Brief overview of the build and its strengths..."
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
-            />
+          {/* Section 2: Base Stats */}
+          <div className="p-6 rounded-xl border border-card-border bg-card-bg">
+            <h2 className="text-xl font-semibold mb-2">Base Stats</h2>
+            <p className="text-sm text-muted mb-4">Enter your base stat values (before equipment bonuses)</p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              {BASE_STATS.map((stat) => (
+                <div key={stat.id}>
+                  <label className={`block text-sm font-medium mb-2 ${stat.color}`}>
+                    {stat.abbrev}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="999"
+                    value={baseStats[stat.id as keyof BuildStats] || 5}
+                    onChange={(e) => setBaseStats(prev => ({
+                      ...prev,
+                      [stat.id]: parseInt(e.target.value) || 0,
+                    }))}
+                    className="w-full px-3 py-2 rounded-lg border border-card-border bg-background text-foreground text-center font-mono focus:outline-none focus:border-accent"
+                  />
+                  <div className="text-xs text-muted text-center mt-1">{stat.name}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Secondary Stats (Optional) */}
+            <div className="mt-6 pt-6 border-t border-card-border">
+              <h3 className="text-sm font-medium text-muted mb-3">Secondary Stats (Optional)</h3>
+              <div className="grid grid-cols-3 gap-4">
+                {SECONDARY_STATS.map((stat) => (
+                  <div key={stat.id}>
+                    <label className={`block text-xs font-medium mb-1 ${stat.color}`}>
+                      {stat.name}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={secondaryStats[stat.id as keyof typeof secondaryStats] || ''}
+                      onChange={(e) => setSecondaryStats(prev => ({
+                        ...prev,
+                        [stat.id]: parseInt(e.target.value) || 0,
+                      }))}
+                      className="w-full px-3 py-2 rounded-lg border border-card-border bg-background text-foreground text-center font-mono text-sm focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Skills */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Skills & Abilities *</label>
-            <textarea
-              required
-              rows={5}
-              placeholder="List the skills/abilities and explain your skill choices..."
-              value={formData.skills}
-              onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
-            />
-          </div>
+          {/* Section 3: Abilities (only show if class selected) */}
+          {classData && (
+            <div className="p-6 rounded-xl border border-card-border bg-card-bg">
+              <h2 className="text-xl font-semibold mb-2">{classData.name} Abilities</h2>
+              <p className="text-sm text-muted mb-4">Set the level for each ability (0 = not invested, 1-5 = level)</p>
 
-          {/* Equipment */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Equipment & Gear</label>
-            <textarea
-              rows={4}
-              placeholder="Recommended weapons, armor, and accessories..."
-              value={formData.equipment}
-              onChange={(e) => setFormData({ ...formData, equipment: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
-            />
-          </div>
+              <div className="space-y-3">
+                {classData.abilities.map((ability) => (
+                  <div
+                    key={ability.id}
+                    className={`p-4 rounded-lg border transition-all ${
+                      abilities[ability.id] && abilities[ability.id] > 0
+                        ? 'border-accent/50 bg-accent/5'
+                        : 'border-card-border bg-background'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-1.5 py-0.5 text-xs rounded ${
+                            ability.type === 'spell' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
+                          }`}>
+                            {ability.type}
+                          </span>
+                          <h4 className="font-semibold">{ability.name}</h4>
+                        </div>
+                        <p className="text-sm text-muted mt-1 line-clamp-2">{ability.description}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted">Lvl</span>
+                        <select
+                          value={abilities[ability.id] || 0}
+                          onChange={(e) => handleAbilityChange(ability.id, parseInt(e.target.value))}
+                          className="px-3 py-2 rounded-lg border border-card-border bg-background text-foreground font-mono focus:outline-none focus:border-accent"
+                        >
+                          <option value={0}>0</option>
+                          {Array.from({ length: ability.maxLevel }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>{i + 1}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-          {/* Playstyle */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Playstyle & Tips</label>
-            <textarea
-              rows={4}
-              placeholder="How to play this build effectively, rotation tips, etc..."
-              value={formData.playstyle}
-              onChange={(e) => setFormData({ ...formData, playstyle: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
-            />
+          {/* Section 4: Description & Notes */}
+          <div className="p-6 rounded-xl border border-card-border bg-card-bg">
+            <h2 className="text-xl font-semibold mb-4">Build Details</h2>
+
+            {/* Description */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Description *</label>
+              <textarea
+                required
+                rows={3}
+                placeholder="Brief overview of the build, its purpose, and strengths..."
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
+              />
+            </div>
+
+            {/* Equipment */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Recommended Equipment</label>
+              <textarea
+                rows={3}
+                placeholder="Recommended weapons, armor, accessories, and stat priorities on gear..."
+                value={formData.equipment}
+                onChange={(e) => setFormData({ ...formData, equipment: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
+              />
+            </div>
+
+            {/* Playstyle */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Playstyle & Tips</label>
+              <textarea
+                rows={3}
+                placeholder="How to play this build effectively, ability rotation, positioning tips..."
+                value={formData.playstyle}
+                onChange={(e) => setFormData({ ...formData, playstyle: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
+              />
+            </div>
           </div>
 
           {/* Submit */}
@@ -204,13 +352,13 @@ export default function NewBuildPage() {
             <div className="flex gap-4">
               <Link
                 href="/builds"
-                className="px-8 py-3 border border-card-border text-muted hover:text-foreground font-semibold rounded-lg transition-colors"
+                className="px-6 py-3 border border-card-border text-muted hover:text-foreground font-semibold rounded-lg transition-colors"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !selectedClass}
                 className="px-8 py-3 bg-accent hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
               >
                 {submitting ? 'Submitting...' : 'Submit Build'}

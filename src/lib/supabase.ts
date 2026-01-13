@@ -7,18 +7,40 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // Types for our database tables
+export interface BuildStats {
+  strength?: number;
+  agility?: number;
+  intelligence?: number;
+  willpower?: number;
+  courage?: number;
+}
+
+export interface BuildSecondaryStats {
+  health?: number;
+  mana?: number;
+  stamina?: number;
+}
+
+export interface BuildAbilities {
+  [abilityId: string]: number; // ability id -> level (0-5)
+}
+
 export interface Build {
   id: string;
   title: string;
   class_name: string;
   description: string;
-  skills: string | null;
+  skills: string | null; // Legacy text field
   equipment: string | null;
   playstyle: string | null;
   author_name: string;
   created_at: string;
   upvotes: number;
   tags: string[];
+  // New structured fields
+  base_stats?: BuildStats | null;
+  secondary_stats?: BuildSecondaryStats | null;
+  abilities?: BuildAbilities | null;
 }
 
 export interface Discussion {
