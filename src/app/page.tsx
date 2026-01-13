@@ -6,36 +6,37 @@ export default function Home() {
     <div>
       {/* Hero Section */}
       <section
-        className="relative py-16 sm:py-24 px-4 text-center"
+        className="relative px-4 text-center"
         style={{
-          background: 'radial-gradient(circle at center top, rgba(245,158,11,0.08) 0%, transparent 50%), linear-gradient(to bottom, #18181b, #09090b)'
+          paddingTop: '140px',
+          paddingBottom: '120px',
+          background: 'radial-gradient(circle at center 30%, rgba(245,158,11,0.12), transparent 55%), linear-gradient(#0b0c0f, #06070a)'
         }}
       >
         <div className="container mx-auto">
-          {/* Full Logo with glow */}
-          <div className="mb-8 relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-64 h-64 sm:w-80 sm:h-80 bg-amber-500/10 blur-3xl rounded-full" />
-            </div>
+          {/* Full Logo */}
+          <div className="mb-10">
             <img
               src="/logo.png"
               alt="Dreadmyst Nexus"
-              className="h-40 sm:h-52 md:h-60 lg:h-72 w-auto mx-auto relative"
+              className="w-[260px] sm:w-[300px] md:w-[340px] mx-auto"
             />
           </div>
-          <p className="text-lg sm:text-xl max-w-xl mx-auto mb-10" style={{ color: 'rgba(228, 228, 231, 0.75)' }}>
+          <p className="text-lg sm:text-xl max-w-xl mx-auto mb-10" style={{ color: 'rgba(255, 255, 255, 0.78)' }}>
             A community-driven hub for Dreadmyst Online. Discover builds, explore guides, and trade with fellow adventurers.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
               href="/wiki"
-              className="btn-primary px-7 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-all"
+              className="px-7 py-3 text-white font-semibold rounded-lg transition-all hover:shadow-[0_0_14px_rgba(245,158,11,0.35)]"
+              style={{ background: 'linear-gradient(135deg, #d97706, #f59e0b)' }}
             >
               Explore Wiki
             </Link>
             <Link
               href="/builds"
-              className="btn-secondary px-7 py-3 border border-accent text-accent-light hover:bg-accent/10 font-semibold rounded-lg transition-all"
+              className="px-7 py-3 text-amber-500 font-semibold rounded-lg transition-all hover:bg-amber-500/[0.08]"
+              style={{ border: '1px solid rgba(245,158,11,0.6)' }}
             >
               Browse Builds
             </Link>
@@ -75,16 +76,16 @@ export default function Home() {
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-14">Latest Updates</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="card-hover p-7 rounded-xl bg-card-bg cursor-pointer">
+            <div className="card-hover bg-card-bg cursor-pointer">
               <span className="text-[10px] text-amber-500/80 uppercase tracking-widest font-semibold">New Build</span>
-              <h3 className="text-lg font-semibold mt-3 mb-2">Shadow Assassin - Max DPS Guide</h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(228, 228, 231, 0.65)' }}>A high-damage build focusing on critical strikes and stealth mechanics...</p>
+              <h3 className="text-lg font-semibold mt-3 mb-2 text-foreground">Shadow Assassin - Max DPS Guide</h3>
+              <p className="text-sm">A high-damage build focusing on critical strikes and stealth mechanics...</p>
               <p className="text-xs text-muted mt-4">Posted by Player123</p>
             </div>
-            <div className="card-hover p-7 rounded-xl bg-card-bg cursor-pointer">
+            <div className="card-hover bg-card-bg cursor-pointer">
               <span className="text-[10px] text-amber-500/80 uppercase tracking-widest font-semibold">Wiki Update</span>
-              <h3 className="text-lg font-semibold mt-3 mb-2">Beginner&apos;s Guide Updated</h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(228, 228, 231, 0.65)' }}>Complete walkthrough for new players including starter tips...</p>
+              <h3 className="text-lg font-semibold mt-3 mb-2 text-foreground">Beginner&apos;s Guide Updated</h3>
+              <p className="text-sm">Complete walkthrough for new players including starter tips...</p>
               <p className="text-xs text-muted mt-4">Updated today</p>
             </div>
           </div>

@@ -76,21 +76,14 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-card-border bg-card-bg/95 backdrop-blur">
       <div className="container mx-auto px-4">
-        <div className="flex h-14 sm:h-16 items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <img
-                src="/portal.png"
-                alt=""
-                className="h-11 sm:h-14 w-auto relative animate-portal-glow"
-              />
-            </div>
-            <div className="text-lg sm:text-xl font-bold tracking-tight hidden sm:block">
-              <span className="text-amber-500">Dreadmyst</span>
-              <span className="text-amber-300 ml-1">Nexus</span>
-            </div>
+        <div className="flex h-14 items-center justify-between">
+          {/* Logo - Portal icon only */}
+          <Link href="/" className="flex items-center">
+            <img
+              src="/portal.png"
+              alt="Dreadmyst Nexus"
+              className="w-[22px] h-[22px] hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.4)] transition-all duration-200"
+            />
           </Link>
 
           {/* Navigation - centered */}
@@ -103,15 +96,15 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative px-1 py-1.5 text-sm font-medium transition-all duration-200 ${
+                  className={`relative pb-1.5 text-[0.9rem] tracking-[0.04em] transition-colors duration-200 ${
                     isActive
                       ? 'text-amber-500'
-                      : 'text-muted hover:text-foreground'
+                      : 'text-white/65 hover:text-white/90'
                   }`}
                 >
                   {item.label}
                   {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />
+                    <span className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-amber-500 rounded-sm" />
                   )}
                 </Link>
               );
