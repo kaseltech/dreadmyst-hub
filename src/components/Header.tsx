@@ -76,14 +76,17 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-card-border bg-card-bg/95 backdrop-blur">
       <div className="container mx-auto px-4">
-        <div className="flex h-20 sm:h-24 items-center justify-between">
+        <div className="flex h-14 sm:h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <img
-              src="/portal.png"
-              alt=""
-              className="h-10 sm:h-12 w-auto"
-            />
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <img
+                src="/portal.png"
+                alt=""
+                className="h-11 sm:h-14 w-auto relative animate-portal-glow"
+              />
+            </div>
             <div className="text-lg sm:text-xl font-bold tracking-tight hidden sm:block">
               <span className="text-amber-500">Dreadmyst</span>
               <span className="text-amber-300 ml-1">Nexus</span>
@@ -91,7 +94,7 @@ export default function Header() {
           </Link>
 
           {/* Navigation - centered */}
-          <nav className="hidden md:flex items-center gap-1 bg-background/50 px-1.5 py-1 rounded-lg border border-card-border/50">
+          <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/' && pathname.startsWith(item.href));
@@ -100,13 +103,16 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                  className={`relative px-1 py-1.5 text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-card-border text-foreground'
+                      ? 'text-amber-500'
                       : 'text-muted hover:text-foreground'
                   }`}
                 >
                   {item.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />
+                  )}
                 </Link>
               );
             })}

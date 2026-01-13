@@ -45,3 +45,48 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-light);
 }
+
+/* Portal glow animation */
+@keyframes portal-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.3)); }
+  50% { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.5)); }
+}
+
+.animate-portal-glow {
+  animation: portal-glow 6s ease-in-out infinite;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+/* Button glow effects */
+.btn-primary {
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+}
+
+.btn-secondary {
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+}
+
+/* Typography improvements */
+p, .body-text {
+  line-height: 1.65;
+  color: rgba(228, 228, 231, 0.8);
+}

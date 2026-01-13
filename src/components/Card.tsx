@@ -10,10 +10,10 @@ interface CardProps {
 
 export default function Card({ title, description, href, icon, children }: CardProps) {
   const content = (
-    <div className="p-6 rounded-xl border border-card-border bg-card-bg hover:border-accent/50 transition-all duration-200 h-full">
-      {icon && <div className="text-3xl mb-3">{icon}</div>}
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-muted text-sm">{description}</p>
+    <div className="card-hover p-8 rounded-xl bg-card-bg h-full">
+      {icon && <div className="text-3xl mb-4 opacity-80">{icon}</div>}
+      <h3 className="text-lg font-semibold mb-3">{title}</h3>
+      <p className="text-sm leading-relaxed" style={{ color: 'rgba(228, 228, 231, 0.7)' }}>{description}</p>
       {children}
     </div>
   );
