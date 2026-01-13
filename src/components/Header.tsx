@@ -85,7 +85,7 @@ export default function Header() {
             <img
               src="/portal.png"
               alt="Dreadmyst Nexus"
-              className="w-[22px] h-[22px] object-contain"
+              className="w-[56px] h-[56px] object-contain -my-3"
             />
           </Link>
 
