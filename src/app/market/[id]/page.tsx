@@ -287,10 +287,10 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
                   </button>
                 )}
 
-                {/* Discord DM - using seller's Discord ID from profile metadata */}
-                {seller && (
+                {/* Discord DM - only show if seller has discord_id */}
+                {seller?.discord_id && (
                   <a
-                    href={`https://discord.com/users/${seller.id}`}
+                    href={`https://discord.com/users/${seller.discord_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white text-sm font-medium rounded-lg transition-colors"

@@ -80,6 +80,7 @@ export interface Profile {
   avatar_url: string | null;
   is_admin: boolean;
   hide_ign: boolean;
+  discord_id: string | null;
   created_at: string;
 }
 

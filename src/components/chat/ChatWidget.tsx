@@ -44,6 +44,46 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const [notification, setNotification] = useState<{ message: string; sender: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+
+  // Request notification permission on mount & reset title on visibility change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+
+    // Reset document title when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden && document.title.includes('(New Message)')) {
+        document.title = 'Dreadmyst Nexus';
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+    }
+  };
+
+  const showBrowserNotification = (title: string, body: string, onClick?: () => void) => {
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+      const notification = new Notification(title, {
+        body,
+        icon: '/portal.png',
+        badge: '/favicon-32x32.png',
+        tag: 'dreadmyst-chat', // Prevents duplicate notifications
+      });
+      notification.onclick = () => {
+        window.focus();
+        onClick?.();
+        notification.close();
+      };
+    }
+  };
 
   // Archive/Block/Bookmark state
   const [archivedConvoIds, setArchivedConvoIds] = useState<Set<string>>(new Set());
@@ -481,19 +521,43 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
 
             // Only notify if not viewing this user's chat
             if (activeUserId !== newMsg.sender_id) {
+              const senderName = sender?.in_game_name || sender?.username || 'Someone';
+              const messagePreview = newMsg.content.slice(0, 50) + (newMsg.content.length > 50 ? '...' : '');
+
+              // In-app toast notification
               setNotification({
-                message: newMsg.content.slice(0, 50) + (newMsg.content.length > 50 ? '...' : ''),
-                sender: sender?.in_game_name || sender?.username || 'Someone',
+                message: messagePreview,
+                sender: senderName,
               });
 
               if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
               notificationTimeoutRef.current = setTimeout(() => setNotification(null), 5000);
 
+              // Browser push notification (works even if tab not focused)
+              showBrowserNotification(
+                `Message from ${senderName}`,
+                messagePreview,
+                () => {
+                  setMode('open');
+                  setActiveUserId(newMsg.sender_id);
+                }
+              );
+
+              // Update document title to show unread
+              if (document.hidden) {
+                document.title = `(New Message) Dreadmyst Nexus`;
+              }
+
+              // Play notification sound (if available)
               try {
                 const audio = new Audio('/notification.mp3');
                 audio.volume = 0.5;
-                audio.play().catch(() => {});
-              } catch {}
+                audio.play().catch(() => {
+                  // Sound file may not exist - that's okay
+                });
+              } catch {
+                // Audio API not supported - that's okay
+              }
             }
 
             fetchUnreadCount();
@@ -865,6 +929,23 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
           ) : (
             /* User List */
             <div className="flex-1 overflow-y-auto" style={{ background: '#08080a' }}>
+              {/* Notification permission prompt */}
+              {notificationPermission === 'default' && (
+                <div className="p-3 border-b border-gray-800 bg-amber-500/5">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <p className="text-xs text-muted flex-1">Enable notifications to know when you get messages</p>
+                    <button
+                      onClick={requestNotificationPermission}
+                      className="px-2 py-1 text-xs bg-amber-500/20 text-amber-400 rounded hover:bg-amber-500/30 transition-colors"
+                    >
+                      Enable
+                    </button>
+                  </div>
+                </div>
+              )}
               {userChats.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-4">
                   <svg className="w-10 h-10 text-muted/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

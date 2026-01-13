@@ -110,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                           'User';
           const avatar = user.user_metadata?.avatar_url ||
                         user.user_metadata?.picture || null;
+          // Discord provider_id is the actual Discord user ID
+          const discordId = user.user_metadata?.provider_id || null;
 
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
@@ -117,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               id: userId,
               username: username,
               avatar_url: avatar,
+              discord_id: discordId,
             })
             .select()
             .single();
@@ -131,6 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               in_game_name: null,
               is_admin: false,
               hide_ign: false,
+              discord_id: discordId,
               created_at: new Date().toISOString(),
             });
           } else {
@@ -138,6 +142,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
+        // Profile exists - check if we need to update discord_id
+        const { data: { user } } = await supabase.auth.getUser();
+        const discordId = user?.user_metadata?.provider_id || null;
+
+        if (discordId && !data.discord_id) {
+          // Update profile with discord_id
+          await supabase
+            .from('profiles')
+            .update({ discord_id: discordId })
+            .eq('id', userId);
+          data.discord_id = discordId;
+        }
+
         setProfile(data);
       }
     } catch (err) {
@@ -152,6 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           in_game_name: null,
           is_admin: false,
           hide_ign: false,
+          discord_id: user.user_metadata?.provider_id || null,
           created_at: new Date().toISOString(),
         });
       }
