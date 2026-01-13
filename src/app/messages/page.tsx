@@ -116,7 +116,12 @@ export default function MessagesPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold">{otherUser?.username || 'Unknown'}</span>
+                        <div>
+                          <span className="font-semibold">{otherUser?.username || 'Unknown'}</span>
+                          {otherUser?.in_game_name && (
+                            <span className="text-xs text-accent ml-2">IGN: {otherUser.in_game_name}</span>
+                          )}
+                        </div>
                         <span className="text-xs text-muted">{formatTimeAgo(convo.updated_at)}</span>
                       </div>
                       <p className="text-sm text-muted truncate">

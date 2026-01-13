@@ -9,8 +9,8 @@
 export type ItemTier = 'godly' | 'holy' | 'blessed' | 'none';
 
 export const TIER_CONFIG: Record<ItemTier, { label: string; color: string; bgColor: string; order: number }> = {
-  godly: { label: 'Godly', color: 'text-amber-400', bgColor: 'bg-amber-500/20', order: 1 },
-  holy: { label: 'Holy', color: 'text-purple-400', bgColor: 'bg-purple-500/20', order: 2 },
+  godly: { label: 'Godly', color: 'text-purple-400', bgColor: 'bg-purple-500/20', order: 1 },
+  holy: { label: 'Holy', color: 'text-pink-400', bgColor: 'bg-pink-500/20', order: 2 },
   blessed: { label: 'Blessed', color: 'text-blue-400', bgColor: 'bg-blue-500/20', order: 3 },
   none: { label: 'Normal', color: 'text-gray-300', bgColor: 'bg-gray-500/20', order: 4 },
 };

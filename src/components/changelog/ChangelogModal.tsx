@@ -15,6 +15,23 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: '0.4.0',
+    date: 'January 12, 2026',
+    title: 'Marketplace UX Improvements',
+    changes: [
+      { type: 'new', text: 'Edit listing modal - change price, tier, sockets, and more after posting' },
+      { type: 'new', text: 'Stats display on marketplace tiles - see item stats at a glance' },
+      { type: 'new', text: 'Dynamic stat picker with type-ahead search - just start typing to filter' },
+      { type: 'new', text: 'Equipment vs Materials toggle - list stackable items with quantity' },
+      { type: 'new', text: 'In-game name (IGN) shown in chat - easier to find players' },
+      { type: 'new', text: 'Whisper command now includes asking price' },
+      { type: 'improved', text: 'Simplified listing form - single page, faster to post' },
+      { type: 'improved', text: 'Removed confusing suffix system - manually enter stats instead' },
+      { type: 'fixed', text: 'Chat widget messages now appear immediately after sending' },
+      { type: 'fixed', text: 'Tier colors corrected - Godly (Purple), Holy (Pink), Blessed (Blue)' },
+    ],
+  },
+  {
     version: '0.3.0',
     date: 'January 12, 2026',
     title: 'Chat Widget & Item System',

@@ -7,7 +7,7 @@ import { supabase, Listing, ItemCategory } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { formatGoldShort, formatTimeAgo } from '@/lib/formatters';
-import { ItemTier, TIER_CONFIG, getTierColorClass } from '@/types/items';
+import { ItemTier, TIER_CONFIG, getTierColorClass, STAT_CONFIG, PrimaryStat } from '@/types/items';
 
 const categories: { value: ItemCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All Items' },
@@ -216,16 +216,31 @@ export default function MarketPage() {
                   <h3 className={`text-lg font-semibold mb-2 ${getTierColorClass(listingTier)}`}>
                     {listing.item_name}
                   </h3>
-                  {listing.item_description && (
-                    <p className="text-muted text-sm mb-3 line-clamp-2">{listing.item_description}</p>
+                  {/* Stats display */}
+                  {listing.stats && Object.keys(listing.stats).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {Object.entries(listing.stats).slice(0, 4).map(([stat, value]) => {
+                        const config = STAT_CONFIG[stat as PrimaryStat];
+                        return (
+                          <span key={stat} className={`text-xs ${config?.color || 'text-muted'}`}>
+                            +{value} {config?.abbrev || stat.slice(0, 3).toUpperCase()}
+                          </span>
+                        );
+                      })}
+                    </div>
                   )}
                   {/* Socket indicators */}
                   {listing.socket_count > 0 && (
-                    <div className="flex gap-1 mb-3">
+                    <div className="flex items-center gap-1 mb-2">
                       {Array.from({ length: listing.socket_count }).map((_, i) => (
-                        <div key={i} className="w-4 h-4 rounded-full border border-accent/50 bg-accent/20" />
+                        <div key={i} className="w-3 h-3 rounded-full border border-accent/50 bg-accent/20" />
                       ))}
+                      <span className="text-xs text-muted ml-1">{listing.socket_count} socket{listing.socket_count > 1 ? 's' : ''}</span>
                     </div>
+                  )}
+                  {/* Level requirement */}
+                  {listing.level_requirement && listing.level_requirement > 1 && (
+                    <p className="text-xs text-muted mb-2">Lvl {listing.level_requirement}+</p>
                   )}
                   <div className="flex items-center justify-between mt-auto pt-3 border-t border-card-border">
                     <span className="text-xl font-bold text-yellow-500">{formatGoldShort(listing.price)}g</span>

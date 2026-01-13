@@ -164,7 +164,11 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
               .single();
 
             if (fullMessage) {
-              setMessages(prev => [...prev, fullMessage]);
+              // Add message, avoiding duplicates
+              setMessages(prev => {
+                if (prev.some(m => m.id === fullMessage.id)) return prev;
+                return [...prev, fullMessage];
+              });
 
               // Mark as read since we're viewing it
               if (newMsg.sender_id !== user.id) {
@@ -208,18 +212,32 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     e.preventDefault();
     if (!newMessage.trim() || !user || !activeConversation || sending) return;
 
+    const messageContent = newMessage.trim();
     setSending(true);
-    const { error } = await supabase.from('messages').insert({
-      conversation_id: activeConversation.id,
-      sender_id: user.id,
-      content: newMessage.trim(),
-    });
+    setNewMessage(''); // Clear input immediately for better UX
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: activeConversation.id,
+        sender_id: user.id,
+        content: messageContent,
+      })
+      .select('*, sender:profiles(*)')
+      .single();
 
     if (error) {
       console.error('Error sending message:', error);
       alert('Failed to send message. Please try again.');
-    } else {
-      setNewMessage('');
+      setNewMessage(messageContent); // Restore message on error
+    } else if (data) {
+      // Add message to local state immediately (don't rely on subscription)
+      setMessages(prev => {
+        // Avoid duplicates if subscription already added it
+        if (prev.some(m => m.id === data.id)) return prev;
+        return [...prev, data];
+      });
+
       await supabase
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
@@ -319,6 +337,9 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
                   <div className="min-w-0">
                     <p className="font-medium text-sm truncate">
                       {getOtherUser(activeConversation)?.username || 'Unknown'}
+                      {getOtherUser(activeConversation)?.in_game_name && (
+                        <span className="text-muted font-normal"> IGN: {getOtherUser(activeConversation)?.in_game_name}</span>
+                      )}
                     </p>
                     <p className="text-xs text-muted truncate">
                       {activeConversation.listing?.item_name}
@@ -421,6 +442,11 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
                             {formatTimeAgo(convo.updated_at)}
                           </span>
                         </div>
+                        {otherUser?.in_game_name && (
+                          <p className="text-xs text-accent truncate">
+                            IGN: {otherUser.in_game_name}
+                          </p>
+                        )}
                         <p className="text-xs text-muted truncate">
                           {convo.listing?.item_name || 'Item'}
                         </p>

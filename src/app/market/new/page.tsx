@@ -1,15 +1,21 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, ItemCategory } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useEscapeKey } from '@/hooks/useHotkeys';
-import ItemBuilder, { ItemBuilderData } from '@/components/market/ItemBuilder';
-import SocketSelector from '@/components/market/SocketSelector';
 import { formatGoldShort } from '@/lib/formatters';
-import { STAT_CONFIG, PrimaryStat, ItemStats } from '@/types/items';
+import { ItemTier, TIER_CONFIG } from '@/types/items';
+import StatPicker from '@/components/market/StatPicker';
+import SocketSelector from '@/components/market/SocketSelector';
+
+interface StatEntry {
+  id: string;
+  stat: string;
+  value: number;
+}
 
 const categories: { value: ItemCategory; label: string }[] = [
   { value: 'weapons', label: 'Weapons' },
@@ -24,31 +30,29 @@ export default function NewListingPage() {
   const router = useRouter();
   const { user, profile, loading: authLoading, signInWithDiscord } = useAuth();
   const [submitting, setSubmitting] = useState(false);
-  const [activeSection, setActiveSection] = useState<'item' | 'stats' | 'price'>('item');
 
-  // Item builder data
-  const [itemData, setItemData] = useState<ItemBuilderData>({
-    tier: 'none',
-    baseTypeId: null,
-    suffixModifierId: null,
-    suffixAnimalId: null,
-    customName: '',
-    useCustomName: false,
-  });
+  // Item type toggle
+  const [isEquipment, setIsEquipment] = useState(true);
 
-  // Additional item properties
-  const [socketCount, setSocketCount] = useState(0);
-  const [levelRequirement, setLevelRequirement] = useState(1);
-  const [stats, setStats] = useState<ItemStats>({});
-  const [equipEffects, setEquipEffects] = useState('');
-
-  // Listing data
-  const [category, setCategory] = useState<ItemCategory | ''>('');
-  const [price, setPrice] = useState('');
-  const [priceDisplay, setPriceDisplay] = useState('');
+  // Basic info
+  const [itemName, setItemName] = useState('');
+  const [category, setCategory] = useState<ItemCategory>('weapons');
   const [description, setDescription] = useState('');
 
-  // Handle ESC to go back
+  // Price
+  const [priceDisplay, setPriceDisplay] = useState('');
+  const [price, setPrice] = useState(0);
+
+  // Equipment-specific
+  const [tier, setTier] = useState<ItemTier>('none');
+  const [socketCount, setSocketCount] = useState(0);
+  const [levelRequirement, setLevelRequirement] = useState(1);
+  const [stats, setStats] = useState<StatEntry[]>([]);
+  const [equipEffects, setEquipEffects] = useState('');
+
+  // Non-equipment (materials, etc.)
+  const [quantity, setQuantity] = useState(1);
+
   useEscapeKey(() => router.push('/market'));
 
   useEffect(() => {
@@ -57,16 +61,8 @@ export default function NewListingPage() {
     }
   }, [authLoading, user, router]);
 
-  // Handle item builder changes
-  const handleItemChange = useCallback((data: ItemBuilderData) => {
-    setItemData(data);
-  }, []);
-
-  // Parse price input with K/M shortcuts
   const handlePriceChange = (value: string) => {
     setPriceDisplay(value);
-
-    // Parse K and M suffixes
     const cleaned = value.trim().toLowerCase();
     let numericValue = 0;
 
@@ -79,21 +75,9 @@ export default function NewListingPage() {
     }
 
     if (!isNaN(numericValue) && numericValue > 0) {
-      setPrice(Math.floor(numericValue).toString());
+      setPrice(Math.floor(numericValue));
     } else {
-      setPrice('');
-    }
-  };
-
-  // Update stat value
-  const handleStatChange = (stat: PrimaryStat, value: string) => {
-    const numValue = parseInt(value);
-    if (value === '' || isNaN(numValue)) {
-      const newStats = { ...stats };
-      delete newStats[stat];
-      setStats(newStats);
-    } else {
-      setStats({ ...stats, [stat]: numValue });
+      setPrice(0);
     }
   };
 
@@ -101,46 +85,49 @@ export default function NewListingPage() {
     e.preventDefault();
     if (!user || !profile) return;
 
-    // Validate
-    if (!itemData.customName && !itemData.baseTypeId) {
-      alert('Please select a base item type or enter a custom name');
+    if (!itemName.trim()) {
+      alert('Please enter an item name');
       return;
     }
 
-    if (!price) {
+    if (price <= 0) {
       alert('Please enter a valid price');
       return;
     }
 
     setSubmitting(true);
 
-    // Determine category from base type if not selected
-    let finalCategory = category;
-    if (!finalCategory && itemData.baseTypeId) {
-      const baseTypes = await import('@/types/items').then(m => m.BASE_TYPES);
-      const baseType = baseTypes.find(b => b.id === itemData.baseTypeId);
-      if (baseType) {
-        finalCategory = baseType.category as ItemCategory;
+    // Convert stats array to object
+    const statsObj: Record<string, number> = {};
+    stats.forEach(s => {
+      if (s.stat && s.value > 0) {
+        statsObj[s.stat] = s.value;
       }
+    });
+
+    const listingData: Record<string, unknown> = {
+      seller_id: user.id,
+      item_name: isEquipment ? itemName.trim() : `${itemName.trim()}${quantity > 1 ? ` x${quantity}` : ''}`,
+      item_description: description.trim() || null,
+      price,
+      category,
+      status: 'active',
+    };
+
+    // Add equipment-specific fields
+    if (isEquipment) {
+      listingData.tier = tier;
+      listingData.socket_count = socketCount;
+      listingData.level_requirement = levelRequirement;
+      listingData.stats = Object.keys(statsObj).length > 0 ? statsObj : null;
+      listingData.equip_effects = equipEffects ? equipEffects.split('\n').filter(e => e.trim()) : null;
     }
 
-    const { data, error } = await supabase.from('listings').insert({
-      seller_id: user.id,
-      item_name: itemData.customName,
-      item_description: description || null,
-      price: parseInt(price),
-      category: finalCategory || 'other',
-      status: 'active',
-      // New structured fields
-      tier: itemData.tier,
-      base_type_id: itemData.baseTypeId,
-      suffix_modifier_id: itemData.suffixModifierId,
-      suffix_animal_id: itemData.suffixAnimalId,
-      socket_count: socketCount,
-      level_requirement: levelRequirement,
-      stats: Object.keys(stats).length > 0 ? stats : null,
-      equip_effects: equipEffects ? equipEffects.split('\n').filter(e => e.trim()) : null,
-    }).select().single();
+    const { data, error } = await supabase
+      .from('listings')
+      .insert(listingData)
+      .select()
+      .single();
 
     if (error) {
       console.error('Error creating listing:', error);
@@ -175,204 +162,213 @@ export default function NewListingPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <nav className="text-sm text-muted mb-6">
           <Link href="/market" className="hover:text-foreground transition-colors">Marketplace</Link>
           <span className="mx-2">/</span>
           <span className="text-foreground">List Item</span>
         </nav>
 
-        <h1 className="text-4xl font-bold mb-2">List an Item for Sale</h1>
-        <p className="text-muted mb-8">Press ESC to cancel</p>
+        <h1 className="text-3xl font-bold mb-2">List an Item</h1>
+        <p className="text-muted mb-6">Press ESC to cancel</p>
 
-        {/* Section Tabs */}
-        <div className="flex gap-2 mb-8 border-b border-card-border">
-          {[
-            { id: 'item', label: 'Item Details' },
-            { id: 'stats', label: 'Stats & Sockets' },
-            { id: 'price', label: 'Price & Description' },
-          ].map((section) => (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Item Type Toggle */}
+          <div className="flex gap-2 p-1 bg-card-border rounded-lg">
             <button
-              key={section.id}
               type="button"
-              onClick={() => setActiveSection(section.id as 'item' | 'stats' | 'price')}
-              className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px ${
-                activeSection === section.id
-                  ? 'border-accent text-foreground'
-                  : 'border-transparent text-muted hover:text-foreground'
+              onClick={() => setIsEquipment(true)}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                isEquipment ? 'bg-accent text-white' : 'text-muted hover:text-foreground'
               }`}
             >
-              {section.label}
+              Equipment
             </button>
-          ))}
-        </div>
+            <button
+              type="button"
+              onClick={() => setIsEquipment(false)}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                !isEquipment ? 'bg-accent text-white' : 'text-muted hover:text-foreground'
+              }`}
+            >
+              Materials / Other
+            </button>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Section: Item Details */}
-          {activeSection === 'item' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <ItemBuilder onChange={handleItemChange} initialData={itemData} />
+          {/* Item Name */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Item Name *</label>
+            <input
+              type="text"
+              required
+              placeholder={isEquipment ? 'e.g., Godly Breastplate of the Lion' : 'e.g., Keys to the Barracks'}
+              value={itemName}
+              onChange={(e) => setItemName(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+            />
+          </div>
 
-              {/* Category Override */}
-              <div>
-                <label className="block text-sm text-muted mb-2">Category Override</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as ItemCategory)}
-                  className="w-full px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-accent"
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Category</label>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setCategory(cat.value)}
+                  className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
+                    category === cat.value
+                      ? 'bg-accent border-accent text-white'
+                      : 'border-card-border text-muted hover:border-accent/50'
+                  }`}
                 >
-                  <option value="">Auto-detect from base type</option>
-                  {categories.map((cat) => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
-              </div>
+                  {cat.label}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* Section: Stats & Sockets */}
-          {activeSection === 'stats' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              {/* Socket Selector */}
-              <SocketSelector value={socketCount} onChange={setSocketCount} />
-
-              {/* Level Requirement */}
+          {/* Equipment-specific fields */}
+          {isEquipment && (
+            <>
+              {/* Tier */}
               <div>
-                <label className="block text-sm text-muted mb-2">Level Requirement</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="25"
-                  value={levelRequirement}
-                  onChange={(e) => setLevelRequirement(parseInt(e.target.value) || 1)}
-                  className="w-24 px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-accent"
-                />
+                <label className="block text-sm font-medium mb-2">Tier</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {(Object.entries(TIER_CONFIG) as [ItemTier, typeof TIER_CONFIG.godly][])
+                    .sort((a, b) => a[1].order - b[1].order)
+                    .map(([value, config]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setTier(value)}
+                        className={`px-3 py-2 rounded-lg border transition-all ${
+                          tier === value
+                            ? `${config.bgColor} border-accent ${config.color}`
+                            : 'border-card-border text-muted hover:border-accent/50'
+                        }`}
+                      >
+                        {config.label}
+                      </button>
+                    ))}
+                </div>
               </div>
 
               {/* Stats */}
-              <div>
-                <label className="block text-sm text-muted mb-3">Primary Stats</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {(Object.entries(STAT_CONFIG) as [PrimaryStat, typeof STAT_CONFIG.strength][]).map(([key, config]) => (
-                    <div key={key} className="flex items-center gap-2">
-                      <span className={`text-sm font-medium ${config.color} w-10`}>{config.abbrev}</span>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={stats[key] ?? ''}
-                        onChange={(e) => handleStatChange(key, e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background border border-card-border rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  ))}
+              <StatPicker stats={stats} onChange={setStats} />
+
+              {/* Sockets & Level */}
+              <div className="grid grid-cols-2 gap-6">
+                <SocketSelector value={socketCount} onChange={setSocketCount} />
+                <div>
+                  <label className="block text-sm font-medium mb-2">Level Requirement</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="25"
+                    value={levelRequirement}
+                    onChange={(e) => setLevelRequirement(parseInt(e.target.value) || 1)}
+                    className="w-24 px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-accent"
+                  />
                 </div>
               </div>
 
               {/* Equip Effects */}
               <div>
-                <label className="block text-sm text-muted mb-2">Equip Effects (one per line)</label>
+                <label className="block text-sm font-medium mb-2">Equip Effects (one per line)</label>
                 <textarea
-                  rows={3}
-                  placeholder="+10% Melee Damage&#10;+5 Fire Resistance&#10;+2% Movement Speed"
+                  rows={2}
+                  placeholder="+10% Melee Damage&#10;+5 Fire Resistance"
                   value={equipEffects}
                   onChange={(e) => setEquipEffects(e.target.value)}
                   className="w-full px-3 py-2 bg-background border border-card-border rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent resize-none"
                 />
               </div>
+            </>
+          )}
+
+          {/* Non-equipment: Quantity */}
+          {!isEquipment && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Quantity</label>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                className="w-24 px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-accent"
+              />
             </div>
           )}
 
-          {/* Section: Price & Description */}
-          {activeSection === 'price' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              {/* Price */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Price (Gold) *</label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g., 50k or 1.5m"
-                    value={priceDisplay}
-                    onChange={(e) => handlePriceChange(e.target.value)}
-                    className="flex-1 px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
-                  />
-                  {price && (
-                    <span className="text-accent font-medium">
-                      = {formatGoldShort(parseInt(price))} Gold
+          {/* Price */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              {isEquipment ? 'Price *' : `Price ${quantity > 1 ? '(total)' : ''} *`}
+            </label>
+            <div className="flex items-center gap-4">
+              <input
+                type="text"
+                required
+                placeholder="e.g., 50k or 1.5m"
+                value={priceDisplay}
+                onChange={(e) => handlePriceChange(e.target.value)}
+                className="flex-1 px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+              />
+              {price > 0 && (
+                <span className="text-accent font-medium whitespace-nowrap">
+                  = {formatGoldShort(price)} Gold
+                  {!isEquipment && quantity > 1 && (
+                    <span className="text-muted text-sm ml-2">
+                      ({formatGoldShort(Math.round(price / quantity))}/ea)
                     </span>
                   )}
-                </div>
-                <p className="text-xs text-muted mt-1">Use K for thousands, M for millions (e.g., 50k, 1.5m)</p>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Additional Description</label>
-                <textarea
-                  rows={4}
-                  placeholder="Any additional notes about the item, trade terms, etc..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
-                />
-              </div>
-
-              {/* Seller Info */}
-              <div className="p-4 rounded-lg bg-card-bg border border-card-border">
-                <p className="text-sm text-muted">
-                  Listing as: <span className="text-foreground font-medium">{profile?.username}</span>
-                </p>
-                {profile?.in_game_name && (
-                  <p className="text-sm text-muted">
-                    In-game name: <span className="text-foreground">{profile.in_game_name}</span>
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Navigation & Submit */}
-          <div className="flex items-center justify-between pt-6 border-t border-card-border">
-            <div className="flex gap-2">
-              {activeSection !== 'item' && (
-                <button
-                  type="button"
-                  onClick={() => setActiveSection(activeSection === 'price' ? 'stats' : 'item')}
-                  className="px-6 py-3 border border-card-border text-muted hover:text-foreground font-medium rounded-lg transition-colors"
-                >
-                  Back
-                </button>
+                </span>
               )}
             </div>
+            <p className="text-xs text-muted mt-1">Use K for thousands, M for millions</p>
+          </div>
 
-            <div className="flex gap-4">
-              <Link
-                href="/market"
-                className="px-6 py-3 border border-card-border text-muted hover:text-foreground font-medium rounded-lg transition-colors"
-              >
-                Cancel
-              </Link>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Additional Notes</label>
+            <textarea
+              rows={2}
+              placeholder="Any additional details..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
+            />
+          </div>
 
-              {activeSection !== 'price' ? (
-                <button
-                  type="button"
-                  onClick={() => setActiveSection(activeSection === 'item' ? 'stats' : 'price')}
-                  className="px-6 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-colors"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-8 py-3 bg-accent hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
-                >
-                  {submitting ? 'Creating...' : 'List Item'}
-                </button>
-              )}
-            </div>
+          {/* Seller Info */}
+          <div className="p-4 rounded-lg bg-card-bg border border-card-border">
+            <p className="text-sm text-muted">
+              Listing as: <span className="text-foreground font-medium">{profile?.username}</span>
+            </p>
+            {profile?.in_game_name && (
+              <p className="text-sm text-muted">
+                In-game: <span className="text-foreground">{profile.in_game_name}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Submit */}
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 px-8 py-3 bg-accent hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+            >
+              {submitting ? 'Creating...' : 'List Item'}
+            </button>
+            <Link
+              href="/market"
+              className="px-8 py-3 border border-card-border text-muted hover:text-foreground font-semibold rounded-lg transition-colors text-center"
+            >
+              Cancel
+            </Link>
           </div>
         </form>
       </div>

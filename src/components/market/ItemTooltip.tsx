@@ -39,10 +39,10 @@ export default function ItemTooltip({
   const animal = SUFFIX_ANIMALS.find(a => a.id === suffixAnimalId);
   const modifier = SUFFIX_MODIFIERS.find(m => m.id === suffixModifierId);
 
-  // Tier-based border colors
+  // Tier-based border colors (Godly=Purple, Holy=Pink, Blessed=Blue)
   const borderColors: Record<ItemTier, string> = {
-    godly: 'border-amber-500/70 shadow-[0_0_20px_rgba(245,158,11,0.3)]',
-    holy: 'border-purple-500/70 shadow-[0_0_20px_rgba(168,85,247,0.3)]',
+    godly: 'border-purple-500/70 shadow-[0_0_20px_rgba(168,85,247,0.3)]',
+    holy: 'border-pink-500/70 shadow-[0_0_20px_rgba(236,72,153,0.3)]',
     blessed: 'border-blue-500/70 shadow-[0_0_20px_rgba(59,130,246,0.3)]',
     none: 'border-gray-600/70',
   };
@@ -56,8 +56,8 @@ export default function ItemTooltip({
       {/* Decorative top border gradient */}
       <div
         className={`h-1 ${
-          tier === 'godly' ? 'bg-gradient-to-r from-transparent via-amber-500 to-transparent' :
-          tier === 'holy' ? 'bg-gradient-to-r from-transparent via-purple-500 to-transparent' :
+          tier === 'godly' ? 'bg-gradient-to-r from-transparent via-purple-500 to-transparent' :
+          tier === 'holy' ? 'bg-gradient-to-r from-transparent via-pink-500 to-transparent' :
           tier === 'blessed' ? 'bg-gradient-to-r from-transparent via-blue-500 to-transparent' :
           'bg-gradient-to-r from-transparent via-gray-500 to-transparent'
         }`}
@@ -181,8 +181,8 @@ export default function ItemTooltip({
       {/* Decorative bottom border gradient */}
       <div
         className={`h-1 ${
-          tier === 'godly' ? 'bg-gradient-to-r from-transparent via-amber-500 to-transparent' :
-          tier === 'holy' ? 'bg-gradient-to-r from-transparent via-purple-500 to-transparent' :
+          tier === 'godly' ? 'bg-gradient-to-r from-transparent via-purple-500 to-transparent' :
+          tier === 'holy' ? 'bg-gradient-to-r from-transparent via-pink-500 to-transparent' :
           tier === 'blessed' ? 'bg-gradient-to-r from-transparent via-blue-500 to-transparent' :
           'bg-gradient-to-r from-transparent via-gray-500 to-transparent'
         }`}

@@ -183,7 +183,12 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
               />
             )}
             <div>
-              <p className="font-semibold">{otherUser?.username || 'Unknown'}</p>
+              <p className="font-semibold">
+                {otherUser?.username || 'Unknown'}
+                {otherUser?.in_game_name && (
+                  <span className="text-muted font-normal text-sm ml-2">IGN: {otherUser.in_game_name}</span>
+                )}
+              </p>
               <Link
                 href={`/market/${conversation.listing_id}`}
                 className="text-sm text-accent-light hover:text-accent"

@@ -9,6 +9,7 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import { formatGold, generateWhisperCommand } from '@/lib/formatters';
 import { TIER_CONFIG, ItemTier, getTierColorClass, BASE_TYPES, SUFFIX_ANIMALS, SUFFIX_MODIFIERS, STAT_CONFIG, PrimaryStat } from '@/types/items';
 import ItemTooltip from '@/components/market/ItemTooltip';
+import EditListingModal from '@/components/market/EditListingModal';
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -31,6 +32,7 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [whisperCopied, setWhisperCopied] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
     fetchListing();
@@ -303,12 +305,20 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
             {isOwner ? (
               <>
                 {!isSold && (
-                  <button
-                    onClick={handleMarkSold}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors"
-                  >
-                    Mark as Sold
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setEditModalOpen(true)}
+                      className="px-6 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-colors"
+                    >
+                      Edit Listing
+                    </button>
+                    <button
+                      onClick={handleMarkSold}
+                      className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors"
+                    >
+                      Mark as Sold
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => setDeleteModalOpen(true)}
@@ -354,6 +364,16 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
         variant="danger"
         loading={deleting}
       />
+
+      {/* Edit Listing Modal */}
+      {listing && (
+        <EditListingModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          listing={listing}
+          onUpdate={(updated) => setListing(updated)}
+        />
+      )}
     </div>
   );
 }

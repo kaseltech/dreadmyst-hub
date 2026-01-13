@@ -46,9 +46,9 @@ Reference tables: `item_base_types`, `item_suffix_animals`, `item_suffix_modifie
 `{Tier} {BaseType} of the {Modifier} {Animal}`
 Example: "Godly Breastplate of the Mauling Lion"
 
-### Tier Colors
-- **Godly (T1):** Gold/amber (`text-amber-400`)
-- **Holy (T2):** Purple (`text-purple-400`)
+### Tier Colors (as per game screenshots)
+- **Godly (T1):** Purple (`text-purple-400`)
+- **Holy (T2):** Pink (`text-pink-400`)
 - **Blessed (T3):** Blue (`text-blue-400`)
 - **Normal:** Gray (`text-gray-300`)
 
@@ -137,7 +137,16 @@ The Supabase client library sometimes hangs on queries. Fixed by using direct RE
 - `C` on /market → navigate to /market/new
 - `ESC` → close modals, cancel forms
 
-## Recent Changes (v0.3.0 - Jan 12, 2026)
+## Recent Changes (v0.4.0 - Jan 12, 2026)
+- **Edit listing modal** - modify price, tier, sockets after posting
+- **Stats on marketplace tiles** - see stats at a glance
+- **Simplified listing form** - single page, dynamic stat picker with type-ahead
+- **Equipment vs Materials toggle** - list stackable items with quantity
+- **IGN display in chat** - shows Discord name + in-game name
+- **Fixed chat widget sync** - sent messages appear immediately
+- **Fixed tier colors** - Godly (Purple), Holy (Pink), Blessed (Blue)
+
+## v0.3.0 Changes
 - Floating chat widget with notifications
 - Item tier system (Godly/Holy/Blessed)
 - Item builder with dropdowns
