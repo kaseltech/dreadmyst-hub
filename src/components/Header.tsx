@@ -1,8 +1,10 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthProvider';
+import { supabase } from '@/lib/supabase';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -15,6 +17,53 @@ const navItems = [
 export default function Header() {
   const pathname = usePathname();
   const { user, profile, loading, signInWithDiscord, signOut } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread message count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!user) return;
+
+    const { data: convos } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
+
+    if (!convos || convos.length === 0) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const convoIds = convos.map(c => c.id);
+
+    const { count } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .in('conversation_id', convoIds)
+      .eq('read', false)
+      .neq('sender_id', user.id);
+
+    setUnreadCount(count || 0);
+  }, [user]);
+
+  // Subscribe to message changes
+  useEffect(() => {
+    if (!user) return;
+
+    fetchUnreadCount();
+
+    const channel = supabase
+      .channel('header-unread')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        () => fetchUnreadCount()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchUnreadCount]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-card-border bg-card-bg/95 backdrop-blur">
@@ -58,7 +107,7 @@ export default function Header() {
               <div className="flex items-center gap-2">
                 <Link
                   href="/messages"
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`relative p-2 rounded-lg transition-colors ${
                     pathname.startsWith('/messages')
                       ? 'bg-accent text-white'
                       : 'text-muted hover:text-foreground hover:bg-card-border'
@@ -68,6 +117,11 @@ export default function Header() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
                 <div className="relative group">
                   <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-card-border transition-colors">

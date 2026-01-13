@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase, Listing, ItemCategory } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { useHotkeys } from '@/hooks/useHotkeys';
+import { formatGoldShort, formatTimeAgo } from '@/lib/formatters';
+import { ItemTier, TIER_CONFIG, getTierColorClass } from '@/types/items';
 
 const categories: { value: ItemCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All Items' },
@@ -15,35 +19,40 @@ const categories: { value: ItemCategory | 'all'; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-function formatGold(amount: number): string {
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
-  if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K`;
-  return amount.toString();
-}
-
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) return 'Just now';
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'Yesterday';
-  return `${days}d ago`;
-}
+const tiers: { value: ItemTier | 'all'; label: string }[] = [
+  { value: 'all', label: 'All Tiers' },
+  { value: 'godly', label: 'Godly' },
+  { value: 'holy', label: 'Holy' },
+  { value: 'blessed', label: 'Blessed' },
+  { value: 'none', label: 'Normal' },
+];
 
 export default function MarketPage() {
+  const router = useRouter();
   const { user, signInWithDiscord } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<ItemCategory | 'all'>('all');
+  const [tier, setTier] = useState<ItemTier | 'all'>('all');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'price_low' | 'price_high'>('newest');
 
+  // Hotkey: C to create new listing
+  useHotkeys([
+    {
+      key: 'c',
+      handler: () => {
+        if (user) {
+          router.push('/market/new');
+        }
+      },
+      enabled: !!user,
+    },
+  ]);
+
   useEffect(() => {
     fetchListings();
-  }, [category, sortBy]);
+  }, [category, tier, sortBy]);
 
   async function fetchListings() {
     setLoading(true);
@@ -54,6 +63,10 @@ export default function MarketPage() {
 
     if (category !== 'all') {
       query = query.eq('category', category);
+    }
+
+    if (tier !== 'all') {
+      query = query.eq('tier', tier);
     }
 
     if (sortBy === 'newest') {
@@ -90,9 +103,10 @@ export default function MarketPage() {
           {user ? (
             <Link
               href="/market/new"
-              className="mt-4 md:mt-0 inline-block px-6 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-colors"
+              className="mt-4 md:mt-0 inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-colors"
             >
               + List Item
+              <kbd className="px-1.5 py-0.5 text-xs bg-white/20 rounded">C</kbd>
             </Link>
           ) : (
             <button
@@ -137,6 +151,25 @@ export default function MarketPage() {
             ))}
           </div>
 
+          {/* Tier Filter */}
+          <div className="flex flex-wrap gap-2">
+            {tiers.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setTier(t.value)}
+                className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                  tier === t.value
+                    ? t.value === 'all'
+                      ? 'bg-accent text-white'
+                      : `${TIER_CONFIG[t.value as ItemTier].bgColor} ${TIER_CONFIG[t.value as ItemTier].color}`
+                    : 'bg-card-border text-muted hover:text-foreground'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
           {/* Sort */}
           <select
             value={sortBy}
@@ -159,30 +192,50 @@ export default function MarketPage() {
         {/* Listings Grid */}
         {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredListings.map((listing) => (
-              <Link
-                key={listing.id}
-                href={`/market/${listing.id}`}
-                className="block p-4 rounded-xl border border-card-border bg-card-bg hover:border-accent/50 transition-colors"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <span className="px-2 py-0.5 text-xs font-medium rounded bg-accent/20 text-accent-light capitalize">
-                    {listing.category}
-                  </span>
-                  <span className="text-xs text-muted">{formatTimeAgo(listing.created_at)}</span>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{listing.item_name}</h3>
-                {listing.item_description && (
-                  <p className="text-muted text-sm mb-3 line-clamp-2">{listing.item_description}</p>
-                )}
-                <div className="flex items-center justify-between mt-auto pt-3 border-t border-card-border">
-                  <span className="text-xl font-bold text-yellow-500">{formatGold(listing.price)}g</span>
-                  <span className="text-sm text-muted">
-                    by {listing.seller?.username || 'Unknown'}
-                  </span>
-                </div>
-              </Link>
-            ))}
+            {filteredListings.map((listing) => {
+              const listingTier = (listing.tier as ItemTier) || 'none';
+              return (
+                <Link
+                  key={listing.id}
+                  href={`/market/${listing.id}`}
+                  className="block p-4 rounded-xl border border-card-border bg-card-bg hover:border-accent/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {listingTier !== 'none' && (
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${TIER_CONFIG[listingTier].bgColor} ${TIER_CONFIG[listingTier].color}`}>
+                          {TIER_CONFIG[listingTier].label}
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 text-xs font-medium rounded bg-accent/20 text-accent-light capitalize">
+                        {listing.category}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted">{formatTimeAgo(listing.created_at)}</span>
+                  </div>
+                  <h3 className={`text-lg font-semibold mb-2 ${getTierColorClass(listingTier)}`}>
+                    {listing.item_name}
+                  </h3>
+                  {listing.item_description && (
+                    <p className="text-muted text-sm mb-3 line-clamp-2">{listing.item_description}</p>
+                  )}
+                  {/* Socket indicators */}
+                  {listing.socket_count > 0 && (
+                    <div className="flex gap-1 mb-3">
+                      {Array.from({ length: listing.socket_count }).map((_, i) => (
+                        <div key={i} className="w-4 h-4 rounded-full border border-accent/50 bg-accent/20" />
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-card-border">
+                    <span className="text-xl font-bold text-yellow-500">{formatGoldShort(listing.price)}g</span>
+                    <span className="text-sm text-muted">
+                      by {listing.seller?.username || 'Unknown'}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
 

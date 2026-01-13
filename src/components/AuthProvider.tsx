@@ -4,6 +4,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, Profile } from '@/lib/supabase';
+import CharacterNamePrompt from '@/components/profile/CharacterNamePrompt';
 
 interface AuthContextType {
   user: User | null;
@@ -12,6 +13,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithDiscord: () => Promise<void>;
   signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<Profile>) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signInWithDiscord: async () => {},
   signOut: async () => {},
+  updateProfile: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -28,6 +31,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCharacterPrompt, setShowCharacterPrompt] = useState(false);
+  const [promptDismissed, setPromptDismissed] = useState(false);
+
+  // Check if we should show character name prompt
+  useEffect(() => {
+    if (profile && !profile.in_game_name && !promptDismissed && !loading) {
+      // Small delay to avoid flashing on initial load
+      const timer = setTimeout(() => setShowCharacterPrompt(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [profile, promptDismissed, loading]);
+
+  // Update profile in state
+  function updateProfile(updates: Partial<Profile>) {
+    if (profile) {
+      setProfile({ ...profile, ...updates });
+    }
+  }
 
   useEffect(() => {
     // Get initial session
@@ -148,8 +169,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, signInWithDiscord, signOut }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, signInWithDiscord, signOut, updateProfile }}>
       {children}
+      {user && showCharacterPrompt && (
+        <CharacterNamePrompt
+          isOpen={showCharacterPrompt}
+          userId={user.id}
+          onComplete={(name) => {
+            updateProfile({ in_game_name: name });
+            setShowCharacterPrompt(false);
+          }}
+          onSkip={() => {
+            setShowCharacterPrompt(false);
+            setPromptDismissed(true);
+          }}
+        />
+      )}
     </AuthContext.Provider>
   );
 }

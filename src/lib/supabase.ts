@@ -70,6 +70,16 @@ export interface Listing {
   status: ListingStatus;
   created_at: string;
   updated_at: string;
+  // New item system fields
+  tier: string | null;
+  base_type_id: string | null;
+  suffix_modifier_id: string | null;
+  suffix_animal_id: string | null;
+  socket_count: number;
+  level_requirement: number;
+  stats: Record<string, number> | null;
+  equip_effects: string[] | null;
+  // Relations
   seller?: Profile;
 }
 
