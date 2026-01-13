@@ -23,6 +23,11 @@ const STAT_GROUPS = [
     stats: ALL_STATS.filter(s => s.category === 'primary'),
   },
   {
+    label: 'Skills',
+    categories: ['skills'] as const,
+    stats: ALL_STATS.filter(s => s.category === 'skills'),
+  },
+  {
     label: 'Resists',
     categories: ['resist'] as const,
     stats: ALL_STATS.filter(s => s.category === 'resist'),

@@ -45,6 +45,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [isMuted, setIsMuted] = useState(false);
 
   // Request notification permission on mount & reset title on visibility change
   useEffect(() => {
@@ -112,6 +113,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     const savedPosition = localStorage.getItem('chatWidgetPosition');
     const savedMinPosition = localStorage.getItem('chatMinimizedPosition');
     const savedSize = localStorage.getItem('chatWidgetSize');
+    const savedMuted = localStorage.getItem('chatMuted');
     if (savedPosition) {
       try { setPosition(JSON.parse(savedPosition)); } catch (e) {}
     }
@@ -125,6 +127,9 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
           setChatSize(parsed);
         }
       } catch (e) {}
+    }
+    if (savedMuted === 'true') {
+      setIsMuted(true);
     }
   }, []);
 
@@ -163,6 +168,13 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   useEffect(() => {
     localStorage.setItem('chatWidgetSize', JSON.stringify(chatSize));
   }, [chatSize]);
+
+  // Toggle mute
+  const toggleMute = () => {
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    localStorage.setItem('chatMuted', newMuted.toString());
+  };
 
   // Drag handlers for open panel
   const handlePanelDragStart = (e: React.MouseEvent) => {
@@ -519,8 +531,8 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
               .eq('id', newMsg.sender_id)
               .single();
 
-            // Only notify if not viewing this user's chat
-            if (activeUserId !== newMsg.sender_id) {
+            // Only notify if not viewing this user's chat and not muted
+            if (activeUserId !== newMsg.sender_id && !isMuted) {
               const senderName = sender?.in_game_name || sender?.username || 'Someone';
               const messagePreview = newMsg.content.slice(0, 50) + (newMsg.content.length > 50 ? '...' : '');
 
@@ -596,7 +608,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
       supabase.removeChannel(channel);
       if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
     };
-  }, [user, activeUserId, userChats, fetchConversations, fetchUnreadCount]);
+  }, [user, activeUserId, userChats, fetchConversations, fetchUnreadCount, isMuted]);
 
   // Scroll to bottom
   useEffect(() => {
@@ -838,6 +850,24 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
 
             {/* Controls */}
             <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
+              {/* Mute/Unmute */}
+              <button
+                onClick={toggleMute}
+                className={`p-1.5 rounded transition-colors ${isMuted ? 'text-red-400 hover:text-red-300' : 'text-muted hover:text-foreground'}`}
+                title={isMuted ? 'Unmute notifications' : 'Mute notifications'}
+              >
+                {isMuted ? (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                  </svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                )}
+              </button>
+
               {/* Reset position */}
               {position && (
                 <button onClick={resetPosition} className="p-1.5 text-muted hover:text-foreground rounded" title="Reset position">

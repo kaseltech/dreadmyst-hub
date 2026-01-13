@@ -88,12 +88,8 @@ export default function NewListingPage() {
   const [tier, setTier] = useState<ItemTier>('none');
   const [socketCount, setSocketCount] = useState(0);
   const [levelRequirement, setLevelRequirement] = useState(1);
-  // Initialize with 3 empty stat rows
-  const [stats, setStats] = useState<StatEntry[]>([
-    { id: '1', stat: 'strength', value: 0 },
-    { id: '2', stat: 'agility', value: 0 },
-    { id: '3', stat: 'intelligence', value: 0 },
-  ]);
+  // Initialize with empty stats
+  const [stats, setStats] = useState<StatEntry[]>([]);
   const [equipEffects, setEquipEffects] = useState('');
 
   // Non-equipment (materials, etc.)
@@ -163,11 +159,6 @@ export default function NewListingPage() {
     e.preventDefault();
     if (!user || !profile) return;
 
-    if (!itemName.trim()) {
-      alert('Please enter an item name');
-      return;
-    }
-
     if (pricePerUnit <= 0) {
       alert('Please enter a valid price');
       return;
@@ -183,8 +174,17 @@ export default function NewListingPage() {
       }
     });
 
-    // Build item name for materials (include quantity if > 1)
+    // Build item name
     let finalItemName = itemName.trim();
+
+    // For equipment: auto-generate name if not provided
+    if (isEquipment && !finalItemName) {
+      const tierLabel = tier !== 'none' ? TIER_CONFIG[tier].label + ' ' : '';
+      const subtypeName = getSubtypeOptions().find(o => o.value === equipmentSubtype)?.label || category;
+      finalItemName = `${tierLabel}${subtypeName}`.trim();
+    }
+
+    // For materials: include quantity if > 1
     if (!isEquipment && quantity > 1) {
       finalItemName = `${finalItemName} x${quantity}`;
     }
@@ -346,18 +346,24 @@ export default function NewListingPage() {
               </div>
             )}
 
-            {/* Item Name */}
+            {/* Item Name - Optional for equipment, required for non-equipment */}
             <div>
-              <label className="block text-sm font-medium mb-2">Item Name *</label>
+              <label className="block text-sm font-medium mb-2">
+                Item Name {!isEquipment && '*'}
+                {isEquipment && <span className="text-muted/50 font-normal ml-1">(optional)</span>}
+              </label>
               <input
                 type="text"
-                required
-                placeholder={isEquipment ? 'e.g., Godly Breastplate of the Lion' : 'e.g., Keys to the Barracks'}
+                required={!isEquipment}
+                placeholder={isEquipment ? 'Will auto-generate based on properties' : 'e.g., Keys to the Barracks'}
                 value={itemName}
                 onChange={(e) => setItemName(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
               />
+              {isEquipment && (
+                <p className="text-xs text-muted/50 mt-1">Leave blank to use tier + subtype as the name</p>
+              )}
             </div>
           </div>
 

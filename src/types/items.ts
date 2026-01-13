@@ -75,6 +75,7 @@ export type ItemStatType =
   | 'health'
   | 'mana'
   | 'armorValue'
+  | 'weaponValue'
   // Regeneration
   | 'regeneration'
   | 'meditate'
@@ -87,6 +88,15 @@ export type ItemStatType =
   // Defense
   | 'dodgeRating'
   | 'blockRating'
+  // Weapon Skills
+  | 'skillDaggers'
+  | 'skillStaves'
+  | 'skillShields'
+  | 'skillAxes'
+  | 'skillSwords'
+  | 'skillRanged'
+  | 'skillWands'
+  | 'skillMaces'
   // Resistances
   | 'resistFrost'
   | 'resistFire'
@@ -101,7 +111,7 @@ export interface StatInfo {
   label: string;
   abbrev: string;
   color: string;
-  category: 'primary' | 'secondary' | 'regen' | 'combat' | 'defense' | 'resist';
+  category: 'primary' | 'secondary' | 'regen' | 'combat' | 'defense' | 'skills' | 'resist';
 }
 
 export const STAT_CONFIG: Record<ItemStatType, StatInfo> = {
@@ -115,6 +125,7 @@ export const STAT_CONFIG: Record<ItemStatType, StatInfo> = {
   health: { label: 'Health', abbrev: 'HP', color: 'text-red-300', category: 'secondary' },
   mana: { label: 'Mana', abbrev: 'MP', color: 'text-blue-300', category: 'secondary' },
   armorValue: { label: 'Armor Value', abbrev: 'ARM', color: 'text-slate-300', category: 'secondary' },
+  weaponValue: { label: 'Weapon Value', abbrev: 'WPN', color: 'text-orange-300', category: 'secondary' },
   // Regeneration
   regeneration: { label: 'Regeneration', abbrev: 'REG', color: 'text-pink-400', category: 'regen' },
   meditate: { label: 'Meditate', abbrev: 'MED', color: 'text-indigo-400', category: 'regen' },
@@ -127,6 +138,15 @@ export const STAT_CONFIG: Record<ItemStatType, StatInfo> = {
   // Defense
   dodgeRating: { label: 'Dodge Rating', abbrev: 'DOD', color: 'text-emerald-400', category: 'defense' },
   blockRating: { label: 'Block Rating', abbrev: 'BLK', color: 'text-amber-400', category: 'defense' },
+  // Weapon Skills
+  skillDaggers: { label: 'Daggers Skill', abbrev: 'DAG', color: 'text-rose-300', category: 'skills' },
+  skillStaves: { label: 'Staves Skill', abbrev: 'STV', color: 'text-indigo-300', category: 'skills' },
+  skillShields: { label: 'Shields Skill', abbrev: 'SHD', color: 'text-slate-400', category: 'skills' },
+  skillAxes: { label: 'Axes Skill', abbrev: 'AXE', color: 'text-red-300', category: 'skills' },
+  skillSwords: { label: 'Swords Skill', abbrev: 'SWD', color: 'text-sky-300', category: 'skills' },
+  skillRanged: { label: 'Ranged Skill', abbrev: 'BOW', color: 'text-lime-300', category: 'skills' },
+  skillWands: { label: 'Wands Skill', abbrev: 'WND', color: 'text-purple-300', category: 'skills' },
+  skillMaces: { label: 'Maces Skill', abbrev: 'MCE', color: 'text-amber-300', category: 'skills' },
   // Resistances
   resistFrost: { label: 'Resist Frost', abbrev: 'FRS', color: 'text-cyan-400', category: 'resist' },
   resistFire: { label: 'Resist Fire', abbrev: 'FIR', color: 'text-rose-400', category: 'resist' },
