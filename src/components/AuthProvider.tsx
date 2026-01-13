@@ -32,18 +32,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session ? 'exists' : 'none');
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        console.log('User ID:', session.user.id);
         fetchProfile(session.user.id);
       } else {
         setLoading(false);
       }
+    }).catch(err => {
+      console.error('Error getting session:', err);
+      setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session ? 'has session' : 'no session');
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -59,41 +65,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function fetchProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
-      // Profile doesn't exist, try to create it
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // Profile doesn't exist, try to create it from user metadata
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const username = user.user_metadata?.full_name ||
+                          user.user_metadata?.name ||
+                          user.email?.split('@')[0] ||
+                          'User';
+          const avatar = user.user_metadata?.avatar_url ||
+                        user.user_metadata?.picture || null;
+
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              username: username,
+              avatar_url: avatar,
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Error creating profile:', createError);
+            // Fallback: use user metadata as profile
+            setProfile({
+              id: userId,
+              username: username,
+              avatar_url: avatar,
+              in_game_name: null,
+              created_at: new Date().toISOString(),
+            });
+          } else {
+            setProfile(newProfile);
+          }
+        }
+      } else {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error('Exception in fetchProfile:', err);
+      // Fallback to user metadata
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const username = user.user_metadata?.full_name ||
-                        user.user_metadata?.name ||
-                        user.email?.split('@')[0] ||
-                        'User';
-        const avatar = user.user_metadata?.avatar_url || null;
-
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            username: username,
-            avatar_url: avatar,
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating profile:', createError);
-        } else {
-          setProfile(newProfile);
-        }
+        setProfile({
+          id: userId,
+          username: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+          in_game_name: null,
+          created_at: new Date().toISOString(),
+        });
       }
-    } else {
-      setProfile(data);
     }
     setLoading(false);
   }
