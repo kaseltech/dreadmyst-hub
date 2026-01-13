@@ -135,7 +135,7 @@ export default function MarketplaceFilters({
     <>
       {/* Search */}
       <div className="relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
@@ -143,7 +143,8 @@ export default function MarketplaceFilters({
           placeholder="Search items..."
           value={filters.search}
           onChange={(e) => updateFilter('search', e.target.value)}
-          className="w-full pl-10 pr-4 py-3 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+          className="w-full pl-10 pr-4 py-3 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
         />
         {filters.search && (
           <button
@@ -167,9 +168,13 @@ export default function MarketplaceFilters({
               onClick={() => updateFilter('category', cat.value)}
               className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 ${
                 filters.category === cat.value
-                  ? 'bg-accent text-white shadow-lg shadow-accent/25'
-                  : 'bg-card-border text-muted hover:text-foreground hover:bg-card-border/80'
+                  ? 'text-white'
+                  : 'hover:text-white/80'
               }`}
+              style={filters.category === cat.value
+                ? { background: 'linear-gradient(135deg, #a84b08, #d97706)', border: '1px solid transparent' }
+                : { background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.65)' }
+              }
             >
               <span>{cat.icon}</span>
               <span>{cat.label}</span>
@@ -182,21 +187,33 @@ export default function MarketplaceFilters({
       <div>
         <label className="block text-xs font-medium text-muted mb-2 uppercase tracking-wider">Tier</label>
         <div className="flex flex-wrap gap-2">
-          {tiers.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => updateFilter('tier', t.value)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
-                filters.tier === t.value
-                  ? t.value === 'all'
-                    ? 'bg-accent text-white shadow-lg shadow-accent/25'
-                    : `${TIER_CONFIG[t.value as ItemTier].bgColor} ${TIER_CONFIG[t.value as ItemTier].color} ring-2 ring-current`
-                  : 'bg-card-border text-muted hover:text-foreground'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          {tiers.map((t) => {
+            const isActive = filters.tier === t.value;
+            const tierColor = t.value !== 'all' && t.value !== 'none'
+              ? TIER_CONFIG[t.value as ItemTier].hexColor
+              : '#f59e0b';
+            return (
+              <button
+                key={t.value}
+                onClick={() => updateFilter('tier', t.value)}
+                className="px-3 py-1.5 text-sm rounded-lg transition-all"
+                style={isActive
+                  ? {
+                      background: `rgba(245,158,11,0.08)`,
+                      border: `1px solid ${tierColor}`,
+                      color: tierColor
+                    }
+                  : {
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      color: 'rgba(255,255,255,0.60)'
+                    }
+                }
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -206,7 +223,8 @@ export default function MarketplaceFilters({
         <select
           value={filters.sortBy}
           onChange={(e) => updateFilter('sortBy', e.target.value as FilterState['sortBy'])}
-          className="w-full px-3 py-2 rounded-lg bg-card-border text-foreground border border-card-border focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full px-3 py-2 rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
           <option value="newest">Newest First</option>
           <option value="price_low">Price: Low → High</option>
@@ -330,7 +348,8 @@ export default function MarketplaceFilters({
                 defaultValue={filters.minPrice ? (filters.minPrice >= 1000000 ? `${filters.minPrice/1000000}m` : filters.minPrice >= 1000 ? `${filters.minPrice/1000}k` : filters.minPrice) : ''}
                 onBlur={(e) => handlePriceInput('min', e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handlePriceInput('min', (e.target as HTMLInputElement).value)}
-                className="flex-1 px-3 py-2 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent text-sm"
+                className="flex-1 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
               />
               <span className="text-muted">—</span>
               <input
@@ -339,7 +358,8 @@ export default function MarketplaceFilters({
                 defaultValue={filters.maxPrice ? (filters.maxPrice >= 1000000 ? `${filters.maxPrice/1000000}m` : filters.maxPrice >= 1000 ? `${filters.maxPrice/1000}k` : filters.maxPrice) : ''}
                 onBlur={(e) => handlePriceInput('max', e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handlePriceInput('max', (e.target as HTMLInputElement).value)}
-                className="flex-1 px-3 py-2 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent text-sm"
+                className="flex-1 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
               />
             </div>
           </div>
@@ -355,7 +375,8 @@ export default function MarketplaceFilters({
                 max="25"
                 value={filters.minLevel || ''}
                 onChange={(e) => updateFilter('minLevel', e.target.value ? parseInt(e.target.value) : null)}
-                className="w-20 px-3 py-2 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent text-sm"
+                className="w-20 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
               />
               <span className="text-muted">—</span>
               <input
@@ -365,7 +386,8 @@ export default function MarketplaceFilters({
                 max="25"
                 value={filters.maxLevel || ''}
                 onChange={(e) => updateFilter('maxLevel', e.target.value ? parseInt(e.target.value) : null)}
-                className="w-20 px-3 py-2 rounded-lg border border-card-border bg-background text-foreground placeholder:text-muted focus:outline-none focus:border-accent text-sm"
+                className="w-20 px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
               />
               <span className="text-xs text-muted">(1-25)</span>
             </div>

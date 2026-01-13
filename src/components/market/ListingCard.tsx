@@ -13,27 +13,27 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const tier = (listing.tier as ItemTier) || 'none';
   const tierConfig = TIER_CONFIG[tier];
 
-  // Tier-based styling
+  // Tier-based styling - reduced glow saturation for subtlety
   const tierStyles: Record<ItemTier, { border: string; glow: string; gradient: string }> = {
     godly: {
-      border: 'border-purple-500/60',
-      glow: 'shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.35)]',
-      gradient: 'from-purple-500/20 via-transparent to-transparent',
+      border: 'border-purple-500/40',
+      glow: 'shadow-[0_0_12px_rgba(168,85,247,0.12)] hover:shadow-[0_0_18px_rgba(168,85,247,0.2)]',
+      gradient: 'from-purple-500/15 via-transparent to-transparent',
     },
     holy: {
-      border: 'border-pink-500/60',
-      glow: 'shadow-[0_0_15px_rgba(236,72,153,0.2)] hover:shadow-[0_0_25px_rgba(236,72,153,0.35)]',
-      gradient: 'from-pink-500/20 via-transparent to-transparent',
+      border: 'border-pink-500/40',
+      glow: 'shadow-[0_0_12px_rgba(236,72,153,0.12)] hover:shadow-[0_0_18px_rgba(236,72,153,0.2)]',
+      gradient: 'from-pink-500/15 via-transparent to-transparent',
     },
     blessed: {
-      border: 'border-blue-500/60',
-      glow: 'shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_25px_rgba(59,130,246,0.35)]',
-      gradient: 'from-blue-500/20 via-transparent to-transparent',
+      border: 'border-blue-500/40',
+      glow: 'shadow-[0_0_12px_rgba(59,130,246,0.12)] hover:shadow-[0_0_18px_rgba(59,130,246,0.2)]',
+      gradient: 'from-blue-500/15 via-transparent to-transparent',
     },
     none: {
-      border: 'border-gray-700/60',
-      glow: 'hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]',
-      gradient: 'from-gray-500/10 via-transparent to-transparent',
+      border: 'border-gray-700/40',
+      glow: 'hover:shadow-[0_0_12px_rgba(255,255,255,0.03)]',
+      gradient: 'from-gray-500/8 via-transparent to-transparent',
     },
   };
 

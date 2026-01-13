@@ -9,7 +9,7 @@ import ChangelogModal, { useChangelogNotification } from './changelog/ChangelogM
 
 const navItems = [
   { href: '/', label: 'Home' },
-  { href: '/market', label: 'Market', highlight: true },
+  { href: '/market', label: 'Trade', highlight: true },
   { href: '/wiki', label: 'Wiki' },
   { href: '/builds', label: 'Builds' },
   { href: '/discuss', label: 'Discuss' },

@@ -24,7 +24,7 @@ export default function Footer() {
               <li><Link href="/wiki" className="hover:text-foreground transition-colors">Wiki</Link></li>
               <li><Link href="/builds" className="hover:text-foreground transition-colors">Character Builds</Link></li>
               <li><Link href="/discuss" className="hover:text-foreground transition-colors">Discussions</Link></li>
-              <li><Link href="/market" className="hover:text-foreground transition-colors">Marketplace</Link></li>
+              <li><Link href="/market" className="hover:text-foreground transition-colors">Trade</Link></li>
             </ul>
           </div>
 

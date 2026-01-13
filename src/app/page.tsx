@@ -87,7 +87,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-14">Everything You Need</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card
-              title="Marketplace"
+              title="Trade"
               description="Buy and sell items with other players. Real-time chat, whisper commands, and more."
               href="/market"
               icon={

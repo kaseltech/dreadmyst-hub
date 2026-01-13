@@ -10,6 +10,11 @@ interface ChatWidgetProps {
   onUnreadCountChange?: (count: number) => void;
 }
 
+interface Position {
+  x: number;
+  y: number;
+}
+
 export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -22,6 +27,81 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const [notification, setNotification] = useState<{ message: string; sender: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Draggable state
+  const [position, setPosition] = useState<Position | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Load saved position from localStorage
+  useEffect(() => {
+    const savedPosition = localStorage.getItem('chatWidgetPosition');
+    if (savedPosition) {
+      try {
+        setPosition(JSON.parse(savedPosition));
+      } catch (e) {
+        // Invalid position, use default
+      }
+    }
+  }, []);
+
+  // Save position to localStorage when it changes
+  useEffect(() => {
+    if (position) {
+      localStorage.setItem('chatWidgetPosition', JSON.stringify(position));
+    }
+  }, [position]);
+
+  // Handle drag start
+  const handleDragStart = (e: React.MouseEvent) => {
+    if (!panelRef.current) return;
+    e.preventDefault();
+
+    const rect = panelRef.current.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    setIsDragging(true);
+  };
+
+  // Handle drag
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+
+      // Constrain to viewport
+      const maxX = window.innerWidth - 384; // panel width
+      const maxY = window.innerHeight - 500; // panel height
+
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+
+  // Reset position function
+  const resetPosition = () => {
+    setPosition(null);
+    localStorage.removeItem('chatWidgetPosition');
+  };
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
@@ -313,13 +393,28 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-96 h-[500px] bg-card-bg border border-card-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-2 duration-200">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-card-border bg-background">
+        <div
+          ref={panelRef}
+          className={`fixed z-50 w-96 h-[500px] bg-card-bg border border-card-border rounded-xl shadow-2xl flex flex-col overflow-hidden ${
+            isDragging ? '' : 'animate-in slide-in-from-bottom-2 duration-200'
+          }`}
+          style={position
+            ? { left: position.x, top: position.y }
+            : { bottom: 96, right: 24 }
+          }
+        >
+          {/* Header - Draggable */}
+          <div
+            className={`flex items-center justify-between px-4 py-3 border-b border-card-border bg-background ${
+              isDragging ? 'cursor-grabbing' : 'cursor-grab'
+            }`}
+            onMouseDown={handleDragStart}
+          >
             {activeConversation ? (
               <>
                 <button
                   onClick={() => setActiveConversation(null)}
+                  onMouseDown={(e) => e.stopPropagation()}
                   className="text-muted hover:text-foreground mr-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -346,9 +441,42 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
                     </p>
                   </div>
                 </div>
+                {/* Reset position button */}
+                {position && (
+                  <button
+                    onClick={resetPosition}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="p-1 text-muted hover:text-foreground transition-colors"
+                    title="Reset position"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                )}
               </>
             ) : (
-              <h3 className="font-semibold">Messages</h3>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                  <h3 className="font-semibold">Messages</h3>
+                </div>
+                {/* Reset position button */}
+                {position && (
+                  <button
+                    onClick={resetPosition}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="p-1 text-muted hover:text-foreground transition-colors"
+                    title="Reset position"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             )}
           </div>
 

@@ -88,7 +88,12 @@ export default function NewListingPage() {
   const [tier, setTier] = useState<ItemTier>('none');
   const [socketCount, setSocketCount] = useState(0);
   const [levelRequirement, setLevelRequirement] = useState(1);
-  const [stats, setStats] = useState<StatEntry[]>([]);
+  // Initialize with 3 empty stat rows
+  const [stats, setStats] = useState<StatEntry[]>([
+    { id: '1', stat: 'strength', value: 0 },
+    { id: '2', stat: 'agility', value: 0 },
+    { id: '3', stat: 'intelligence', value: 0 },
+  ]);
   const [equipEffects, setEquipEffects] = useState('');
 
   // Non-equipment (materials, etc.)
@@ -253,113 +258,137 @@ export default function NewListingPage() {
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto">
         <nav className="text-sm text-muted mb-6">
-          <Link href="/market" className="hover:text-foreground transition-colors">Marketplace</Link>
+          <Link href="/market" className="hover:text-foreground transition-colors">Trade</Link>
           <span className="mx-2">/</span>
           <span className="text-foreground">List Item</span>
         </nav>
 
         <h1 className="text-3xl font-bold mb-2">List an Item</h1>
-        <p className="text-muted mb-6">Press ESC to cancel</p>
+        <p className="text-muted mb-8">Press ESC to cancel</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Item Type Toggle */}
-          <div className="flex gap-2 p-1 bg-card-border rounded-lg">
-            <button
-              type="button"
-              onClick={() => setIsEquipment(true)}
-              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
-                isEquipment ? 'bg-accent text-white' : 'text-muted hover:text-foreground'
-              }`}
-            >
-              Equipment
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsEquipment(false)}
-              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
-                !isEquipment ? 'bg-accent text-white' : 'text-muted hover:text-foreground'
-              }`}
-            >
-              Materials / Keys / Other
-            </button>
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Category</label>
-            <div className="flex flex-wrap gap-2">
-              {(isEquipment ? equipmentCategories : materialCategories).map((cat) => (
-                <button
-                  key={cat.value}
-                  type="button"
-                  onClick={() => setCategory(cat.value)}
-                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                    category === cat.value
-                      ? 'bg-accent border-accent text-white'
-                      : 'border-card-border text-muted hover:border-accent/50 hover:text-foreground'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Equipment Subtype Dropdown */}
-          {isEquipment && subtypeOptions.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {category === 'weapons' ? 'Weapon Type' : category === 'armor' ? 'Armor Slot' : 'Accessory Type'}
-              </label>
-              <select
-                value={equipmentSubtype}
-                onChange={(e) => setEquipmentSubtype(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground focus:outline-none focus:border-accent"
+          {/* Item Type Toggle - Segmented Control */}
+          <div className="p-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => setIsEquipment(true)}
+                className={`flex-1 py-3 px-4 rounded-md text-sm font-semibold transition-all ${
+                  isEquipment
+                    ? 'text-white'
+                    : 'text-muted/70 hover:text-white/80'
+                }`}
+                style={isEquipment ? { background: 'linear-gradient(135deg, #a84b08, #d97706)' } : {}}
               >
-                <option value="">Select {category === 'weapons' ? 'weapon type' : 'slot'}...</option>
-                {subtypeOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+                Equipment
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEquipment(false)}
+                className={`flex-1 py-3 px-4 rounded-md text-sm font-semibold transition-all ${
+                  !isEquipment
+                    ? 'text-white'
+                    : 'text-muted/70 hover:text-white/80'
+                }`}
+                style={!isEquipment ? { background: 'linear-gradient(135deg, #a84b08, #d97706)' } : {}}
+              >
+                Materials / Keys / Other
+              </button>
             </div>
-          )}
-
-          {/* Item Name */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Item Name *</label>
-            <input
-              type="text"
-              required
-              placeholder={isEquipment ? 'e.g., Godly Breastplate of the Lion' : 'e.g., Keys to the Barracks'}
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
-            />
           </div>
 
-          {/* Equipment-specific fields */}
+          {/* Item Details Section */}
+          <div className="p-5 rounded-xl space-y-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted/80">Item Details</h2>
+
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Category</label>
+              <div className="flex flex-wrap gap-2">
+                {(isEquipment ? equipmentCategories : materialCategories).map((cat) => (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setCategory(cat.value)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      category === cat.value
+                        ? 'text-white'
+                        : 'hover:text-white/80'
+                    }`}
+                    style={category === cat.value
+                      ? { background: 'linear-gradient(135deg, #a84b08, #d97706)', border: '1px solid transparent' }
+                      : { background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.65)' }
+                    }
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Equipment Subtype Dropdown */}
+            {isEquipment && subtypeOptions.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  {category === 'weapons' ? 'Weapon Type' : category === 'armor' ? 'Armor Slot' : 'Accessory Type'}
+                </label>
+                <select
+                  value={equipmentSubtype}
+                  onChange={(e) => setEquipmentSubtype(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <option value="">Select {category === 'weapons' ? 'weapon type' : 'slot'}...</option>
+                  {subtypeOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Item Name */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Item Name *</label>
+              <input
+                type="text"
+                required
+                placeholder={isEquipment ? 'e.g., Godly Breastplate of the Lion' : 'e.g., Keys to the Barracks'}
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+              />
+            </div>
+          </div>
+
+          {/* Equipment Properties Section */}
           {isEquipment && (
-            <>
+            <div className="p-5 rounded-xl space-y-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted/80">Equipment Properties</h2>
+
               {/* Tier */}
               <div>
                 <label className="block text-sm font-medium mb-2">Tier</label>
                 <div className="grid grid-cols-4 gap-2">
                   {(Object.entries(TIER_CONFIG) as [ItemTier, typeof TIER_CONFIG.godly][])
                     .sort((a, b) => a[1].order - b[1].order)
-                    .map(([value, config]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setTier(value)}
-                        className={`px-3 py-2 rounded-lg border transition-all ${
-                          tier === value
-                            ? `${config.bgColor} border-accent ${config.color}`
-                            : 'border-card-border text-muted hover:border-accent/50'
-                        }`}
-                      >
-                        {config.label}
-                      </button>
-                    ))}
+                    .map(([value, config]) => {
+                      const isActive = tier === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setTier(value)}
+                          className="px-3 py-2 rounded-lg transition-all text-sm font-medium"
+                          style={isActive
+                            ? { background: `rgba(245,158,11,0.08)`, border: `1px solid ${config.hexColor}`, color: config.hexColor }
+                            : { background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.60)' }
+                          }
+                        >
+                          {config.label}
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
 
@@ -377,7 +406,8 @@ export default function NewListingPage() {
                     max="25"
                     value={levelRequirement}
                     onChange={(e) => setLevelRequirement(parseInt(e.target.value) || 1)}
-                    className="w-24 px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-accent"
+                    className="w-24 px-3 py-2 rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                   />
                 </div>
               </div>
@@ -390,11 +420,17 @@ export default function NewListingPage() {
                   placeholder={"+10% Melee Damage\n+5 Fire Resistance"}
                   value={equipEffects}
                   onChange={(e) => setEquipEffects(e.target.value)}
-                  className="w-full px-3 py-2 bg-background border border-card-border rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent resize-none"
+                  className="w-full px-3 py-2 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                 />
               </div>
+            </div>
+          )}
 
-              {/* Equipment Price */}
+          {/* Pricing Section */}
+          {isEquipment && (
+            <div className="p-5 rounded-xl space-y-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted/80">Pricing</h2>
               <div>
                 <label className="block text-sm font-medium mb-2">Price *</label>
                 <div className="flex items-center gap-4">
@@ -404,17 +440,18 @@ export default function NewListingPage() {
                     placeholder="e.g., 50k or 1.5m"
                     value={priceDisplay}
                     onChange={(e) => handlePriceChange(e.target.value)}
-                    className="flex-1 px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+                    className="flex-1 px-4 py-3 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                   />
                   {pricePerUnit > 0 && (
-                    <span className="text-accent font-medium whitespace-nowrap">
+                    <span className="text-amber-500 font-semibold whitespace-nowrap">
                       = {formatGoldShort(pricePerUnit)} Gold
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted mt-1">Use K for thousands, M for millions</p>
+                <p className="text-xs text-muted mt-1.5">Use K for thousands, M for millions</p>
               </div>
-            </>
+            </div>
           )}
 
           {/* Non-equipment: Quantity and Price */}
@@ -422,123 +459,139 @@ export default function NewListingPage() {
             <>
               {/* Scroll Tier (for consumables) */}
               {category === 'consumables' && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">Scroll Tier (optional)</label>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setScrollTier('')}
-                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                        scrollTier === ''
-                          ? 'bg-accent border-accent text-white'
-                          : 'border-card-border text-muted hover:border-accent/50'
-                      }`}
-                    >
-                      None
-                    </button>
-                    {scrollTiers.map((t) => (
+                <div className="p-5 rounded-xl space-y-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted/80">Consumable Properties</h2>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Scroll Tier (optional)</label>
+                    <div className="flex flex-wrap gap-2">
                       <button
-                        key={t.value}
                         type="button"
-                        onClick={() => setScrollTier(t.value)}
-                        className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                          scrollTier === t.value
-                            ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400'
-                            : 'border-card-border text-muted hover:border-accent/50'
-                        }`}
+                        onClick={() => setScrollTier('')}
+                        className="px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                        style={scrollTier === ''
+                          ? { background: 'linear-gradient(135deg, #a84b08, #d97706)', border: '1px solid transparent', color: '#fff' }
+                          : { background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.60)' }
+                        }
                       >
-                        {t.label}
+                        None
                       </button>
-                    ))}
+                      {scrollTiers.map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => setScrollTier(t.value)}
+                          className="px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                          style={scrollTier === t.value
+                            ? { background: 'rgba(6, 182, 212, 0.15)', border: '1px solid #06b6d4', color: '#22d3ee' }
+                            : { background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.60)' }
+                          }
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Quantity */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Quantity</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-24 px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-accent"
-                />
-              </div>
+              {/* Pricing Section for Materials */}
+              <div className="p-5 rounded-xl space-y-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted/80">Quantity & Pricing</h2>
 
-              {/* Price Per Item */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Price Each *</label>
-                <div className="flex items-center gap-4">
+                {/* Quantity */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Quantity</label>
                   <input
-                    type="text"
-                    required
-                    placeholder="e.g., 50k or 1.5m"
-                    value={priceDisplay}
-                    onChange={(e) => handlePriceChange(e.target.value)}
-                    className="flex-1 px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-24 px-3 py-2 rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                   />
-                  {pricePerUnit > 0 && (
-                    <span className="text-yellow-500 font-bold whitespace-nowrap">
-                      {formatGoldShort(pricePerUnit)}/ea
-                    </span>
-                  )}
                 </div>
-                <p className="text-xs text-muted mt-1">Use K for thousands, M for millions</p>
-              </div>
 
-              {/* Total Price Display */}
-              {pricePerUnit > 0 && quantity > 1 && (
-                <div className="p-4 rounded-lg bg-accent/10 border border-accent/30">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted">
-                      {quantity}x @ {formatGoldShort(pricePerUnit)} each
-                    </span>
-                    <span className="text-xl font-bold text-yellow-500">
-                      = {formatGoldShort(totalPrice)} Gold Total
-                    </span>
+                {/* Price Per Item */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Price Each *</label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g., 50k or 1.5m"
+                      value={priceDisplay}
+                      onChange={(e) => handlePriceChange(e.target.value)}
+                      className="flex-1 px-4 py-3 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    />
+                    {pricePerUnit > 0 && (
+                      <span className="text-amber-500 font-semibold whitespace-nowrap">
+                        {formatGoldShort(pricePerUnit)}/ea
+                      </span>
+                    )}
                   </div>
+                  <p className="text-xs text-muted mt-1.5">Use K for thousands, M for millions</p>
                 </div>
-              )}
+
+                {/* Total Price Display */}
+                {pricePerUnit > 0 && quantity > 1 && (
+                  <div className="p-4 rounded-lg" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted">
+                        {quantity}x @ {formatGoldShort(pricePerUnit)} each
+                      </span>
+                      <span className="text-xl font-bold text-amber-500">
+                        = {formatGoldShort(totalPrice)} Gold Total
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Additional Notes</label>
-            <textarea
-              rows={2}
-              placeholder="Any additional details..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-card-border bg-card-bg text-foreground placeholder:text-muted focus:outline-none focus:border-accent resize-none"
-            />
-          </div>
+          {/* Additional Info Section */}
+          <div className="p-5 rounded-xl space-y-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted/80">Additional Info</h2>
 
-          {/* Seller Info */}
-          <div className="p-4 rounded-lg bg-card-bg border border-card-border">
-            <p className="text-sm text-muted">
-              Listing as: <span className="text-foreground font-medium">{profile?.username}</span>
-            </p>
-            {profile?.in_game_name && (
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Notes (optional)</label>
+              <textarea
+                rows={2}
+                placeholder="Any additional details..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+              />
+            </div>
+
+            {/* Seller Info */}
+            <div className="pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="text-sm text-muted">
-                In-game: <span className="text-foreground">{profile.in_game_name}</span>
+                Listing as: <span className="text-foreground font-medium">{profile?.in_game_name || profile?.username}</span>
               </p>
-            )}
+            </div>
           </div>
 
           {/* Submit */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 pt-2">
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 px-8 py-3 bg-accent hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+              className="flex-1 px-8 py-3.5 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: submitting ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #b45309, #e68a00)',
+                boxShadow: submitting ? 'none' : '0 4px 12px rgba(0,0,0,0.3)'
+              }}
             >
               {submitting ? 'Creating...' : 'List Item'}
             </button>
             <Link
               href="/market"
-              className="px-8 py-3 border border-card-border text-muted hover:text-foreground font-semibold rounded-lg transition-colors text-center"
+              className="px-8 py-3.5 text-muted hover:text-foreground font-semibold rounded-lg transition-colors text-center"
+              style={{ border: '1px solid rgba(255,255,255,0.10)' }}
             >
               Cancel
             </Link>

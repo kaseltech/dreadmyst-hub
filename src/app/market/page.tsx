@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase, Listing } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -9,6 +8,7 @@ import { useHotkeys } from '@/hooks/useHotkeys';
 import { ItemTier } from '@/types/items';
 import MarketplaceFilters, { FilterState, defaultFilters } from '@/components/market/MarketplaceFilters';
 import ListingCard from '@/components/market/ListingCard';
+import CreateListingModal from '@/components/market/CreateListingModal';
 
 export default function MarketPage() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function MarketPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Hotkey: C to create new listing
   useHotkeys([
@@ -23,7 +24,7 @@ export default function MarketPage() {
       key: 'c',
       handler: () => {
         if (user) {
-          router.push('/market/new');
+          setShowCreateModal(true);
         }
       },
       enabled: !!user,
@@ -138,20 +139,24 @@ export default function MarketPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold mb-1">Marketplace</h1>
+            <h1 className="text-3xl font-bold mb-1">Trade</h1>
             <p className="text-muted text-sm">Buy and sell items with other players</p>
           </div>
           {user ? (
-            <Link
-              href="/market/new"
-              className="mt-4 md:mt-0 inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg transition-colors"
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="mt-4 md:mt-0 inline-flex items-center gap-2 px-5 py-2.5 text-white font-semibold rounded-lg transition-all"
+              style={{
+                background: 'linear-gradient(135deg, #b45309, #e68a00)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               List Item
               <kbd className="px-1.5 py-0.5 text-xs bg-white/20 rounded ml-1">C</kbd>
-            </Link>
+            </button>
           ) : (
             <button
               onClick={signInWithDiscord}
@@ -222,6 +227,16 @@ export default function MarketPage() {
           </div>
         )}
       </div>
+
+      {/* Create Listing Modal */}
+      <CreateListingModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={(listingId) => {
+          fetchListings(); // Refresh listings
+          router.push(`/market/${listingId}`); // Navigate to the new listing
+        }}
+      />
     </div>
   );
 }
