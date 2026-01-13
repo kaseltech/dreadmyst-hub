@@ -508,11 +508,6 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }: Creat
           />
         </div>
 
-        {/* Seller Info */}
-        <div className="text-sm text-muted pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          Listing as: <span className="text-foreground font-medium">{profile?.in_game_name || profile?.username}</span>
-        </div>
-
         {/* Actions */}
         <div className="flex gap-3 pt-2">
           <button

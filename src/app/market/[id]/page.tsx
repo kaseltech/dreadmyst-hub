@@ -237,26 +237,6 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
             </div>
           )}
 
-          {/* Seller Info */}
-          <div className="p-4 rounded-lg bg-background border border-card-border mb-6">
-            <h2 className="text-sm font-semibold text-muted mb-2">Seller</h2>
-            <div className="flex items-center gap-3">
-              {seller?.avatar_url && (
-                <img
-                  src={seller.avatar_url}
-                  alt={seller.username}
-                  className="w-10 h-10 rounded-full"
-                />
-              )}
-              <div className="flex-1">
-                <p className="font-medium">{seller?.username || 'Unknown'}</p>
-                {seller?.in_game_name && (
-                  <p className="text-sm text-muted">IGN: {seller.in_game_name}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Contact Options (for non-owners) */}
           {!isOwner && !isSold && user && (
             <div className="p-4 rounded-lg bg-background border border-card-border mb-6">

@@ -125,25 +125,13 @@ export default function ListingCard({ listing }: ListingCardProps) {
         {/* Divider */}
         <div className="border-t border-gray-800 my-3" />
 
-        {/* Footer - Price and Seller */}
+        {/* Footer - Price */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <span className="text-lg font-bold text-yellow-500">
               {formatGoldShort(listing.price)}
             </span>
             <span className="text-sm text-yellow-600">Gold</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {listing.seller?.avatar_url && (
-              <img
-                src={listing.seller.avatar_url}
-                alt=""
-                className="w-5 h-5 rounded-full ring-1 ring-gray-700"
-              />
-            )}
-            <span className="text-xs text-gray-500 truncate max-w-[80px]">
-              {listing.seller?.username || 'Unknown'}
-            </span>
           </div>
         </div>
       </div>
