@@ -565,7 +565,7 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         async (payload: { new: Record<string, unknown> }) => {
-          const newMsg = payload.new as Message;
+          const newMsg = payload.new as unknown as Message;
           console.log('[Chat] New message received via realtime:', newMsg.id);
 
           // Show notification if not from us and chat not focused on that user
