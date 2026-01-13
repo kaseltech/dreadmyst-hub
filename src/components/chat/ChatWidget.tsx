@@ -44,6 +44,8 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   const [notification, setNotification] = useState<{ message: string; sender: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFetchRef = useRef<number>(0);
+  const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [isMuted, setIsMuted] = useState(false);
 
@@ -369,9 +371,16 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
     fetchBookmarkedUsers();
   };
 
-  // Fetch conversations and group by user
+  // Fetch conversations and group by user (with rate limiting)
   const fetchConversations = useCallback(async () => {
     if (!user) return;
+
+    // Rate limit: don't fetch more than once per 5 seconds
+    const now = Date.now();
+    if (now - lastFetchRef.current < 5000) {
+      return;
+    }
+    lastFetchRef.current = now;
 
     const { data, error } = await supabase
       .from('conversations')
@@ -544,11 +553,11 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
   useEffect(() => {
     if (!user) return;
 
-    // Delay initial fetch so page content loads first
+    // Delay initial fetch so page content loads first (3 seconds)
     const initTimer = setTimeout(() => {
       fetchConversations();
       fetchUnreadCount();
-    }, 1000);
+    }, 3000);
 
     const channel = supabase
       .channel('chat-messages')
@@ -647,17 +656,24 @@ export default function ChatWidget({ onUnreadCountChange }: ChatWidgetProps) {
             }
           }
 
-          fetchConversations();
+          // Debounce the conversation refresh to avoid hammering the database
+          if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+          fetchDebounceRef.current = setTimeout(() => {
+            fetchConversations();
+          }, 2000);
         }
       )
       .subscribe();
 
     return () => {
       clearTimeout(initTimer);
+      if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
       supabase.removeChannel(channel);
       if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
     };
-  }, [user, activeUserId, userChats, fetchConversations, fetchUnreadCount, isMuted]);
+    // Note: Intentionally not including userChats to prevent re-subscription cascade
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, activeUserId, isMuted]);
 
   // Scroll to bottom
   useEffect(() => {
