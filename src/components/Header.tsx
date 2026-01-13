@@ -80,12 +80,12 @@ export default function Header() {
           {/* Logo - Portal icon */}
           <Link
             href="/"
-            className="flex items-center justify-center w-8 h-8 rounded-[10px] overflow-hidden hover:bg-amber-500/[0.06] transition-all duration-200 group"
+            className="flex items-center hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.4)] transition-all duration-200"
           >
             <img
               src="/portal.png"
               alt="Dreadmyst Nexus"
-              className="h-16 w-auto group-hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.35)]"
+              className="h-9 w-auto"
             />
           </Link>
 
