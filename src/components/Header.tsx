@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthProvider';
 import { supabase } from '@/lib/supabase';
+import ChangelogModal, { useChangelogNotification } from './changelog/ChangelogModal';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -18,6 +19,13 @@ export default function Header() {
   const pathname = usePathname();
   const { user, profile, loading, signInWithDiscord, signOut } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const { hasNewUpdates, markAsSeen } = useChangelogNotification();
+
+  const handleOpenChangelog = () => {
+    setChangelogOpen(true);
+    markAsSeen();
+  };
 
   // Fetch unread message count
   const fetchUnreadCount = useCallback(async () => {
@@ -69,12 +77,26 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-card-border bg-card-bg/95 backdrop-blur">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">🌑</span>
-            <span className="text-xl font-bold bg-gradient-to-r from-accent-light to-accent bg-clip-text text-transparent hidden sm:inline">
-              Dreadmyst Hub
-            </span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="text-2xl">🌑</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-accent-light to-accent bg-clip-text text-transparent hidden sm:inline">
+                Dreadmyst Hub
+              </span>
+            </Link>
+            <button
+              onClick={handleOpenChangelog}
+              className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-card-border transition-colors"
+              title="What's New"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              {hasNewUpdates && (
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-accent rounded-full animate-pulse" />
+              )}
+            </button>
+          </div>
 
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
@@ -171,6 +193,8 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      <ChangelogModal isOpen={changelogOpen} onClose={() => setChangelogOpen(false)} />
     </header>
   );
 }
