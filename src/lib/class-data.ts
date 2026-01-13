@@ -91,12 +91,12 @@ export const CLASS_DATA: Record<ClassName, ClassData> = {
   },
 };
 
-// Base stats that all classes share
+// Base stats that all classes share (order matches in-game character screen)
 export const BASE_STATS = [
   { id: 'strength', name: 'Strength', abbrev: 'STR', color: 'text-red-400' },
   { id: 'agility', name: 'Agility', abbrev: 'AGI', color: 'text-green-400' },
-  { id: 'intelligence', name: 'Intelligence', abbrev: 'INT', color: 'text-blue-400' },
   { id: 'willpower', name: 'Willpower', abbrev: 'WIL', color: 'text-purple-400' },
+  { id: 'intelligence', name: 'Intelligence', abbrev: 'INT', color: 'text-blue-400' },
   { id: 'courage', name: 'Courage', abbrev: 'CRG', color: 'text-yellow-400' },
 ] as const;
 
